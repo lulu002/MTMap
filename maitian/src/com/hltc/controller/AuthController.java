@@ -29,6 +29,8 @@ import com.hltc.entity.Token;
 import com.hltc.entity.User;
 import com.hltc.service.IUserService;
 import com.hltc.util.BeanUtil;
+import com.hltc.util.LogUtil;
+
 import static com.hltc.util.SecurityUtil.*;
 
 /**
@@ -56,7 +58,13 @@ public class AuthController {
 		if(null == result.get(Result.SUCCESS)) return result;
 	
 		JSONObject o = new JSONObject();
-		o.put("ossToken", generateOSSToken("wxGYeoOqFGIikopt", "eQyS38ArhJo0fIotIuLoiz0FCx0J4N", jobj.getString("content")));
+		
+		try {
+			o.put("ossToken", generateOSSToken("wxGYeoOqFGIikopt", "eQyS38ArhJo0fIotIuLoiz0FCx0J4N", jobj.getString("content")));
+		} catch (Exception e) {
+			LogUtil.error(e.getMessage()); 
+			e.printStackTrace();
+		}
 		return Result.success(o);
 	}
 }

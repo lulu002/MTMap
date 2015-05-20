@@ -31,4 +31,6 @@ public class GlobalConstant {
 	public static final String UMENG_MESSAGE_IOS_APP_MASTER_SECRET = "wqf6bxt3cyrdb6abfwiy0octzqef06m4";
 	public static final String UMENG_MESSAGE_ANDROID_APPKEY = "5549747467e58ed626001c0a";
 	public static final String UMENG_MESSAGE_ANDROID_APP_MASTER_SECRET = "wfxoibaylo1nxqvkzcovoiumy4wuaelp";
+	
+	public static final String ENV = "test";
 }

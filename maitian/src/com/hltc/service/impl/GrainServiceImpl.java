@@ -71,17 +71,17 @@ public class GrainServiceImpl implements IGrainService{
 
 	@Override
 	public HashMap publish(JSONObject jobj) {
-		String userId = jobj.getString("user_id");
+		String userId = jobj.getString("userId");
 		//step1 存储site
-		String siteSource = jobj.getString("site_source");
+		String siteSource = jobj.getString("siteSource");
 		Site site = new Site();
 		site.setSource(siteSource);
 		String siteId = null;
 		if("0".equals(siteSource)){  //用户自定义的地点
 			siteId = UUIDUtil.getUUID();
 		}else if("1".equals(siteSource)){ //高德的POI
-			siteId = (String)jobj.get("site_id");
-			if(null == siteId) return Result.fail(ErrorCode.PARAMS_ERROR, "Missing parameters: site_id");
+			siteId = (String)jobj.get("siteId");
+			if(null == siteId) return Result.fail(ErrorCode.PARAMS_ERROR, "Missing parameters: siteId");
 		}
 		
 		Double lat = null, lon = null;
@@ -94,26 +94,26 @@ public class GrainServiceImpl implements IGrainService{
 			//TODO　log
 		}
 		site.setSiteId(siteId);
-		site.setName(jobj.getString("site_name"));
-		site.setAddress(jobj.getString("site_address"));
-		site.setTelphone(jobj.getString("site_phone"));
-		site.setGtype(jobj.getString("site_type"));
-		site.setMtype(jobj.getString("mcate_id"));
+		site.setName(jobj.getString("siteName"));
+		site.setAddress(jobj.getString("siteAddress"));
+		site.setTelphone(jobj.getString("sitePhone"));
+		site.setGtype(jobj.getString("siteType"));
+		site.setMtype(jobj.getString("mcateId"));
 		site.setLat(lat);
 		site.setLon(lon);
 		siteDao.saveOrUpdate(site);
 		
 		//step2 创建麦粒
 		Grain grain = new Grain();
-		String cityCode = jobj.getString("city_code");
+		String cityCode = jobj.getString("cityCode");
 		Long time = System.currentTimeMillis();
 		String gid = generateGrainId(cityCode);
 		
 		grain.setGid(gid);
-		grain.setIsPublic(jobj.getString("is_public"));
+		grain.setIsPublic(jobj.getString("isPublic"));
 		grain.setLat(lat);
 		grain.setLon(lon);
-		grain.setMcateId(jobj.getString("mcate_id"));
+		grain.setMcateId(jobj.getString("mcateId"));
 		grain.setSiteId(siteId);
 		grain.setText(jobj.getString("text"));
 		grain.setUserId(userId);

@@ -27,7 +27,6 @@ import com.hltc.util.UUIDUtil;
 
 @Service("userService")
 public class UserServiceImpl implements IUserService{
-	
 	@Autowired
 	private IUserDao userDao;
 	@Autowired
@@ -49,6 +48,7 @@ public class UserServiceImpl implements IUserService{
 	 * @return
 	 */
 	private String generateVerifyCode(){
+		if("test".equalsIgnoreCase(GlobalConstant.ENV)) return "8888";
 		return (int)((Math.random()*9+1)*1000) + "";
 	}
 	
@@ -81,7 +81,7 @@ public class UserServiceImpl implements IUserService{
 	private Boolean checkPwd(String userId, String pwd){
 		PwdHash ph = pwdHashDao.findById(userId);
 		if(null != ph){
-			String str = ph.getPwdSalt() + pwd;
+			String str = ph.getPwdSalt() + pwd.toUpperCase();
 			return SecurityUtil.MD5(str).equals(ph.getPwdHash());
 		}
 		return false;
@@ -92,8 +92,7 @@ public class UserServiceImpl implements IUserService{
 		String salt = UUIDUtil.getUUID();
 		ph.setUserId(userId);
 		ph.setPwdSalt(salt);
-		ph.setPwdHash(SecurityUtil.MD5(salt + pwd));
-		
+		ph.setPwdHash(SecurityUtil.MD5(salt + pwd.toUpperCase()));
 		pwdHashDao.saveOrUpdate(ph);
 		return true;
 	}
@@ -102,7 +101,7 @@ public class UserServiceImpl implements IUserService{
 		PwdHash ph = pwdHashDao.findByUserId(userId);
 		
 		if(null != ph){
-			ph.setPwdHash(SecurityUtil.MD5(ph.getPwdSalt() + pwd));
+			ph.setPwdHash(SecurityUtil.MD5(ph.getPwdSalt() + pwd.toUpperCase()));
 			pwdHashDao.saveOrUpdate(ph);
 			return Result.success(null);
 		}else{
@@ -156,12 +155,17 @@ public class UserServiceImpl implements IUserService{
 			verifyCode.setUserId(userId);
 		}
 		
+		if("test".equalsIgnoreCase(GlobalConstant.ENV)) {
+			verifyCodeDao.saveOrUpdate(verifyCode);  
+			return Result.success();  //测试环境不发送验证码
+		}
+		
 		HashMap<String, Object> sendResult = restAPI.sendTemplateSMS(to, "8859", new String[]{verifyCodeStr, GlobalConstant.VERIFY_CODE_VALID_TIME.toString()});
 		if(null == sendResult || !"000000".equals(sendResult.get("statusCode"))){ //验证码发送失败  
 			result = Result.fail(ErrorCode.VERIFY_CODE_SEND_FAIL);
 		}else{
 			verifyCodeDao.saveOrUpdate(verifyCode);  //TODO  需要返回值
-			result = Result.success(null);
+			result = Result.success();
 		}
 		
 		return  result; 

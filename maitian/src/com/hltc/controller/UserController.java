@@ -28,6 +28,7 @@ import com.hltc.entity.Token;
 import com.hltc.entity.User;
 import com.hltc.service.IUserService;
 import com.hltc.util.BeanUtil;
+import com.hltc.util.LogUtil;
 import com.hltc.util.SecurityUtil;
 
 /**

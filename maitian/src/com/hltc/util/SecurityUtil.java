@@ -107,7 +107,7 @@ public class SecurityUtil {
 			if(required && null == o){
 				return Result.fail(ErrorCode.PARAMS_ERROR,  "missing parameter:" + key);
 			}
-			if(!clazz.isInstance(o)){
+			if(null != o && !clazz.isInstance(o)){
 				return Result.fail(ErrorCode.PARAMS_ERROR, "wrong parameter type of " + key ) ;
 			}
 		}
@@ -128,7 +128,7 @@ public class SecurityUtil {
 	}
 	
 	public static void main(String[] args) {
-		
+		System.out.println(MD5("123456"));
 	}
 	
 	

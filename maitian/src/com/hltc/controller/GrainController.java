@@ -1,18 +1,32 @@
 package com.hltc.controller;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hltc.common.ErrorCode;
@@ -42,26 +56,109 @@ public class GrainController {
 	@Autowired
 	private ICommentDao commentDao;
 	
+	@RequestMapping(value="/publish_batch.json", method = RequestMethod.POST)
+	public @ResponseBody Object publishByFile(HttpServletRequest request, @RequestParam(value="cityCode") String cityCode){
+		System.out.println(cityCode);
+//		Integer minLine =  Integer.valueOf(request.getParameter("minLine")) -1;
+//		Integer maxLine =  (Integer) request.getAttribute("maxLine") -1;
+//		String cityCode = (String) request.getAttribute("cityCode");
+//		System.out.println(minLine);
+//		System.out.println(maxLine);
+//		System.out.println(cityCode);
+		DiskFileItemFactory factory = new DiskFileItemFactory();
+		// 使用系统临时路径
+		String path = System.getProperty("user.home");
+		factory.setRepository(new File(path));
+		factory.setSizeThreshold(1024 * 1024);
+
+		ServletFileUpload upload = new ServletFileUpload(factory);
+		upload.setHeaderEncoding("utf-8");
+		
+		try {
+			//这个方法支持多文件上传，本例子中不需要
+			List<FileItem> list = (List<FileItem>) upload.parseRequest(request);
+			for (FileItem item : list) {
+				// 获取表单的属性名字
+				String name = item.getFieldName();
+				
+				// 如果获取的表单信息是普通的文本信息，上传有时候是混在表单中的，本例中不需要考虑
+				if (item.isFormField()) {
+					String value = new String((item.getString("iso8859-1")).getBytes("iso8859-1"),"utf-8");
+					System.out.println(name+":"+value);
+				} else {
+//					获取上传路径
+//					String value = item.getName();
+//					int start = value.lastIndexOf("\\");
+//					获得上传文件名
+//					String filename = value.substring(start + 1);
+//					将文件写到磁盘，如果不解析就成了文件上传功能了
+//					item.write(new File(path, filename));
+					//-----------进行解析---------
+					Workbook wb = new HSSFWorkbook(item.getInputStream());
+					Sheet sheet1 = wb.getSheetAt(0);
+//					sheet1.setColumnHidden(*,true); //隐藏列
+					
+					for (Row row : sheet1) {
+						Integer num = row.getRowNum();
+//						if(num < minLine || num > maxLine) break;
+						
+				        for (Cell cell : row) {
+//				        	excel单元格的索引
+//				            CellReference cellRef = new CellReference(row.getRowNum(), cell.getColumnIndex());
+//				            System.out.print("索引"+cellRef.formatAsString());
+				            
+				            switch (cell.getCellType()) {
+//				            	文本内容
+				                case Cell.CELL_TYPE_STRING:
+				                    System.out.println(cell.getRichStringCellValue().getString());
+				                    break;
+//								数字与日期
+				                case Cell.CELL_TYPE_NUMERIC:
+				                    if (DateUtil.isCellDateFormatted(cell)) {
+				                        System.out.println(cell.getDateCellValue());
+				                    } else {
+				                        System.out.println(cell.getNumericCellValue());
+				                    }
+				                    break;
+//				                                                      公式数据
+				                case Cell.CELL_TYPE_FORMULA:
+				                    System.out.println(cell.getCellFormula());
+				                    break;
+				                default:
+				                    System.out.println();
+				            }
+				        }
+				    }
+				}
+			}
+		} catch (FileUploadException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("------out-------");
+		return Result.success();
+	}
+	
 	/**
 	 * 发布麦粒
 	 * @param jobj
 	 * @return
 	 */
 	@RequestMapping(value="/publish.json", method=RequestMethod.POST)
-	
 	public @ResponseBody Object publish(@RequestBody JSONObject jobj){
 		//step0 参数验证
-		Map result = parametersValidate(jobj, new String[]{"user_id","token","mcate_id","site_name","site_address","lon","lat","city_code","is_public","text"}, true, String.class);
+		Map result = parametersValidate(jobj, new String[]{"userId","token","mcateId","siteName","siteAddress","lon","lat","cityCode","isPublic","text"}, true, String.class);
 		if(null == result.get(Result.SUCCESS))	return result;
-		result = parametersValidate(jobj, new String[]{"site_id","site_phone", "site_type"}, false, String.class);
+		result = parametersValidate(jobj, new String[]{"siteId","sitePhone", "siteType"}, false, String.class);
 		if(null == result.get(Result.SUCCESS))	return result;
 		result = parametersValidate(jobj, new String[]{"images"}, false, JSONArray.class);
 		if(null == result.get(Result.SUCCESS))	return result;
-		result = parametersScope(jobj, "site_source", true, new String[]{"0","1"});
+		result = parametersScope(jobj, "siteSource", true, new String[]{"0","1"});
 		if(null == result.get(Result.SUCCESS))	return result;
 				
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
+		String userId = jobj.getString("userId");
 		result = userService.loginByToken(userId, jobj.getString("token"));
 		
 		if(null == result.get("success")){
