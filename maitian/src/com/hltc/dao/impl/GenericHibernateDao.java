@@ -42,7 +42,17 @@ public abstract class GenericHibernateDao<T>  implements GenericDao<T>{
 	//通过id查找实体对象
 	@SuppressWarnings("unchecked")
 	public T findById(Serializable id) {
-		return (T)getSession().get(clazz, id);
+		Session session = getSession();
+		
+		try{
+			return (T)getSession().get(clazz, id);
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			session.close();
+		}
+		
+		return null;
 	}
 	
 	//删除实体对象

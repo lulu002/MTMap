@@ -1,0 +1,17 @@
+.grain .grain-edit{
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.grain .pagination{
+  float: left;
+}
+.grain .pagination li{
+  cursor: pointer;
+}
+
+.grain .search-by-page{
+  width: 10%;
+  float: left;
+  margin-left: 20px;
+}

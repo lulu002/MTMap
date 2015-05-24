@@ -2,6 +2,8 @@ package com.hltc.dao;
 
 import java.util.List;
 
+import net.sf.json.JSONObject;
+
 import com.hltc.entity.Grain;
 
 public interface IGrainDao extends GenericDao<Grain>{
@@ -16,4 +18,19 @@ public interface IGrainDao extends GenericDao<Grain>{
 	 * @return
 	 */
 	public List findFriendsGrain(String userId, String mtcate_id, String cityCode, Double lon, Double lat, Double radius);
+
+	
+	/**
+	 * 通过查询条件查询麦粒
+	 * @param jobj
+	 * @return
+	 */
+	public List queryByCondition(JSONObject jobj);
+	
+	/**
+	 * 通过查询条件查询麦粒总数
+	 * @param jobj
+	 * @return
+	 */
+	public Integer countByCondition(JSONObject jobj);
 }

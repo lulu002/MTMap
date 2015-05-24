@@ -8,12 +8,12 @@
 </head>
 <body>
 
-<form action="http://localhost:8080/maitian/v1/grain/publish_batch.json" enctype="multipart/form-data" method="post">
+<form id="uploadGrainForm" action="http://localhost:8080/maitian/v1/grain/publish_batch.json/{minLine}/{maxLine}/{cityCode}" enctype="multipart/form-data" method="post">
 	需要读取的最小行号：<input type="text" name="minLine" /><br />
 	需要读取的最大行号：<input type="text" name="maxLine" /><br />
 	城市编码：<input type="text" name="cityCode"/> <br/>
 	上传文件: <input type="file" name="file1"/><br/> 
-	<input type="submit" value="提交" />
+	<input type="button" value="提交" id="submitBtn"/>
 </form>
 
 
@@ -21,7 +21,16 @@
 <script src="http://maitianditu.oss-cn-hangzhou.aliyuncs.com/static/js/md5.js"></script>
 <script>
 (function($){
-		
+	$('#submitBtn').click(function(){
+		var minLine = $('input[name=minLine]').val(),
+			maxLine = $('input[name=maxLine]').val(),
+			cityCode = $('input[name=cityCode]').val();
+		var form = $('#uploadGrainForm'),
+			action = form.attr('action');
+		    action = action.replace(/\{minLine\}/,minLine).replace(/\{maxLine\}/,maxLine).replace(/\{cityCode\}/,cityCode);
+		form.attr('action', action);
+		form.submit();
+	});
 })(jQuery);
 </script>
 </body>

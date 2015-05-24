@@ -2,6 +2,8 @@ package com.hltc.dao.impl;
 
 import java.util.List;
 
+import net.sf.json.JSONObject;
+
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 
@@ -29,6 +31,48 @@ public class GrainDaoImpl extends GenericHibernateDao<Grain> implements IGrainDa
 		List result = session.createSQLQuery(sql).setParameter(0, userId).setParameter(1, mtcateId).list();
 		session.close();
 		return result;
+	}
+
+	@Override
+	public List queryByCondition(JSONObject jobj) {
+		StringBuffer sql = new StringBuffer();
+		
+		sql.append("select *  ")
+		    .append("from grain as g,site as s, user as u ")
+		    .append("where ")
+		    .append("g.site_id = s.site_id ")
+		    .append("and g.user_id = u.user_id ")
+		    .append("ORDER BY g.user_id ");
+		Object startRow = jobj.get("startRow");
+		Object pageSize = jobj.get("pageSize");
+		if(null != startRow){
+			Integer size = null == pageSize ? 10 : (Integer)pageSize;
+			sql.append("desc limit "+ startRow+","+ size);
+		}
+		Session session = getSession();
+		List list = session.createSQLQuery(sql.toString()).list();
+		session.close();
+		return list;
+	}
+	
+
+	@Override
+	public Integer countByCondition(JSONObject jobj) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("select *  ")
+		    .append("from grain as g,site as s, user as u ")
+		    .append("where ")
+		    .append("g.site_id = s.site_id ")
+		    .append("and g.user_id = u.user_id ")
+		    .append("ORDER BY g.user_id ");
+		Session session = getSession();
+		List list = session.createSQLQuery(sql.toString()).list();
+		session.close();
+		return list.size();
+	}
+	
+	public static void main(String[] args) {
+		
 	}
 	
 }

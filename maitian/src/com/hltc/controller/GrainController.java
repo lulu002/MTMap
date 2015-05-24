@@ -1,9 +1,11 @@
 package com.hltc.controller;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -23,6 +25,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,11 +33,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hltc.common.ErrorCode;
+import com.hltc.common.Pager;
 import com.hltc.common.Result;
 import com.hltc.dao.ICommentDao;
 import com.hltc.dao.IGrainDao;
+import com.hltc.dao.ITokenDao;
 import com.hltc.entity.Comment;
 import com.hltc.entity.Grain;
+import com.hltc.entity.Token;
 import com.hltc.service.IGrainService;
 import com.hltc.service.IUserService;
 import static com.hltc.util.SecurityUtil.*;
@@ -55,16 +61,11 @@ public class GrainController {
 	private IGrainDao grainDao;
 	@Autowired
 	private ICommentDao commentDao;
+	@Autowired
+	private ITokenDao tokenDao;
 	
-	@RequestMapping(value="/publish_batch.json", method = RequestMethod.POST)
-	public @ResponseBody Object publishByFile(HttpServletRequest request, @RequestParam(value="cityCode") String cityCode){
-		System.out.println(cityCode);
-//		Integer minLine =  Integer.valueOf(request.getParameter("minLine")) -1;
-//		Integer maxLine =  (Integer) request.getAttribute("maxLine") -1;
-//		String cityCode = (String) request.getAttribute("cityCode");
-//		System.out.println(minLine);
-//		System.out.println(maxLine);
-//		System.out.println(cityCode);
+	@RequestMapping(value="/publish_batch.json/{minLine}/{maxLine}/{cityCode}", method = RequestMethod.POST)
+	public @ResponseBody Object publishByFile(HttpServletRequest request, @PathVariable Integer minLine, @PathVariable Integer maxLine, @PathVariable String cityCode){
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 		// 使用系统临时路径
 		String path = System.getProperty("user.home");
@@ -97,12 +98,22 @@ public class GrainController {
 					Workbook wb = new HSSFWorkbook(item.getInputStream());
 					Sheet sheet1 = wb.getSheetAt(0);
 //					sheet1.setColumnHidden(*,true); //隐藏列
-					
+					String[] columnArr = new String[]{"","siteId","siteName","siteAddress","sitePhone","siteType","lon","lat","mcateId","text"};
 					for (Row row : sheet1) {
 						Integer num = row.getRowNum();
-//						if(num < minLine || num > maxLine) break;
+						if(num < minLine -1) continue;
+						if(num > maxLine -1) break;
+						Integer i = 0;
 						
+						JSONObject jobj = new JSONObject();
 				        for (Cell cell : row) {
+				          if(++i > 9) break;
+				          
+				          if(i == 8){  //类别
+				        	  jobj.put(columnArr[i], Pattern.compile("[^0-9]").matcher(cell.getRichStringCellValue().getString()).replaceAll(""));
+				        	  continue;
+				          }
+				         
 //				        	excel单元格的索引
 //				            CellReference cellRef = new CellReference(row.getRowNum(), cell.getColumnIndex());
 //				            System.out.print("索引"+cellRef.formatAsString());
@@ -110,24 +121,36 @@ public class GrainController {
 				            switch (cell.getCellType()) {
 //				            	文本内容
 				                case Cell.CELL_TYPE_STRING:
-				                    System.out.println(cell.getRichStringCellValue().getString());
+				                    jobj.put(columnArr[i], cell.getRichStringCellValue().getString());
 				                    break;
 //								数字与日期
 				                case Cell.CELL_TYPE_NUMERIC:
 				                    if (DateUtil.isCellDateFormatted(cell)) {
-				                        System.out.println(cell.getDateCellValue());
+				                    	jobj.put(columnArr[i], cell.getDateCellValue());
 				                    } else {
-				                        System.out.println(cell.getNumericCellValue());
+				                    	 if(i == 4){
+				                    		 DecimalFormat df = new DecimalFormat("#");
+				                    		 jobj.put(columnArr[i], df.format(cell.getNumericCellValue()));
+				                    	 }else{
+				                    		 jobj.put(columnArr[i], cell.getNumericCellValue()+"");
+				                    	 }
 				                    }
 				                    break;
 //				                                                      公式数据
 				                case Cell.CELL_TYPE_FORMULA:
-				                    System.out.println(cell.getCellFormula());
+				                	jobj.put(columnArr[i], cell.getCellFormula());
 				                    break;
 				                default:
 				                    System.out.println();
 				            }
 				        }
+				        jobj.put("cityCode", cityCode);
+				        Token token = tokenDao.findATestToken();
+				        jobj.put("userId",  token.getUserId());
+				        jobj.put("token", token.getToken());
+				        jobj.put("siteSource", "1");
+				        jobj.put("isPublic", Math.random() > 0.5 ? "1" : "0");
+				        grainService.publish(jobj);
 				    }
 				}
 			}
@@ -136,7 +159,6 @@ public class GrainController {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("------out-------");
 		return Result.success();
 	}
 	
@@ -165,6 +187,31 @@ public class GrainController {
 			return result;
 		}
 		return  grainService.publish(jobj);
+	}
+	
+	/**
+	 * 通过查询条件获取麦粒
+	 * @param jobj
+	 * @return
+	 */
+	@RequestMapping(value="/query_grain_list.json", method=RequestMethod.POST)
+	public @ResponseBody Object queryByCondition(@RequestBody JSONObject jobj){
+		Map result = parametersValidate(jobj, new String[]{"currentPage"}, true, Integer.class);
+		if(null == result.get(Result.SUCCESS)) return result;
+		
+		Map map = new HashMap();
+		
+		Pager pager = new Pager(grainDao.countByCondition(jobj));
+		pager.refresh(jobj.getInt("currentPage"));
+		
+		jobj.put("startRow", pager.getStartRow());
+		
+		List list = grainDao.queryByCondition(jobj);
+		
+		map.put("grain", list);
+		map.put("pager", pager);
+		System.out.println("success");
+		return Result.success(map);
 	}
 	
 	/**
