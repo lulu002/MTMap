@@ -12,7 +12,7 @@ public class MtCategory implements java.io.Serializable {
 	private String name;
 	private String icon;
 	private String pid;
-	private String hasChild;
+	private Boolean hasChild;
 
 	// Constructors
 
@@ -27,7 +27,7 @@ public class MtCategory implements java.io.Serializable {
 
 	/** full constructor */
 	public MtCategory(String mcateId, String name, String icon, String pid,
-			String hasChild) {
+			Boolean hasChild) {
 		this.mcateId = mcateId;
 		this.name = name;
 		this.icon = icon;
@@ -69,11 +69,11 @@ public class MtCategory implements java.io.Serializable {
 		this.pid = pid;
 	}
 
-	public String getHasChild() {
+	public Boolean getHasChild() {
 		return this.hasChild;
 	}
 
-	public void setHasChild(String hasChild) {
+	public void setHasChild(Boolean hasChild) {
 		this.hasChild = hasChild;
 	}
 

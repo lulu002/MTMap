@@ -6,10 +6,15 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.PwdHash" table="pwd_hash" catalog="maitian">
-        <id name="userId" type="java.lang.String">
-            <column name="user_id" length="32" />
-            <generator class="assigned" />
+        <id name="phId" type="java.lang.Long">
+            <column name="ph_id" />
+            <generator class="identity" />
         </id>
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id" not-null="true">
+                <comment>用户的ID</comment>
+            </column>
+        </property>
         <property name="pwdSalt" type="java.lang.String">
             <column name="pwd_salt" length="32">
                 <comment>salt值</comment>

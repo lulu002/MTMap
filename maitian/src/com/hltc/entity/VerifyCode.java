@@ -8,8 +8,8 @@ public class VerifyCode implements java.io.Serializable {
 
 	// Fields
 
-	private String vcId;
-	private String userId;
+	private Long vcId;
+	private Long userId;
 	private String phone;
 	private String verifyCode;
 	private Long createTime;
@@ -21,15 +21,9 @@ public class VerifyCode implements java.io.Serializable {
 	public VerifyCode() {
 	}
 
-	/** minimal constructor */
-	public VerifyCode(String vcId) {
-		this.vcId = vcId;
-	}
-
 	/** full constructor */
-	public VerifyCode(String vcId, String userId, String phone,
-			String verifyCode, Long createTime, Integer todayCount) {
-		this.vcId = vcId;
+	public VerifyCode(Long userId, String phone, String verifyCode,
+			Long createTime, Integer todayCount) {
 		this.userId = userId;
 		this.phone = phone;
 		this.verifyCode = verifyCode;
@@ -39,19 +33,19 @@ public class VerifyCode implements java.io.Serializable {
 
 	// Property accessors
 
-	public String getVcId() {
+	public Long getVcId() {
 		return this.vcId;
 	}
 
-	public void setVcId(String vcId) {
+	public void setVcId(Long vcId) {
 		this.vcId = vcId;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 

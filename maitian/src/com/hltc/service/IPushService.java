@@ -14,7 +14,7 @@ public interface IPushService {
 	 * @param keyvalue 需要发送的键值对
 	 * @throws Exception
 	 */
-	public void sendIOSCustomizedcast(String alias, String alert, Map<String, String> keyvalue) throws Exception;
+	public void sendIOSCustomizedcast(String alias, String alert, Map<String, Object> keyvalue) throws Exception;
 	
 	public void sendAndroidBroadcast(String alias, String alert, Map keyvalue) throws Exception;
 }

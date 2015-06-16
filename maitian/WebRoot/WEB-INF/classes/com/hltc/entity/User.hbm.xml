@@ -6,9 +6,9 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.User" table="user" catalog="maitian">
-        <id name="userId" type="java.lang.String">
-            <column name="user_id" length="32" />
-            <generator class="assigned" />
+        <id name="userId" type="java.lang.Long">
+            <column name="user_id" />
+            <generator class="identity" />
         </id>
         <property name="userName" type="java.lang.String">
             <column name="user_name" length="32">

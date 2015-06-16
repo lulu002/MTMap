@@ -1,9 +1,6 @@
 package com.hltc.service.impl;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -13,25 +10,23 @@ import net.sf.json.JSONObject;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.cloopen.rest.sdk.CCPRestSDK;
+
 import com.hltc.common.ErrorCode;
-import com.hltc.common.GlobalConstant;
 import com.hltc.common.Result;
 import com.hltc.dao.ICommentDao;
 import com.hltc.dao.IFavoriteDao;
+import com.hltc.dao.IFriendDao;
 import com.hltc.dao.IGrainDao;
-import com.hltc.dao.IIgnoreDao;
+import com.hltc.dao.INeglectDao;
 import com.hltc.dao.IPraiseDao;
-import com.hltc.dao.IPwdHashDao;
 import com.hltc.dao.ISiteDao;
-import com.hltc.dao.ITokenDao;
 import com.hltc.dao.IUserDao;
 import com.hltc.dao.IUserPhotoAlbumDao;
-import com.hltc.dao.IVerifyCodeDao;
 import com.hltc.entity.Comment;
 import com.hltc.entity.Favorite;
+import com.hltc.entity.Friend;
 import com.hltc.entity.Grain;
-import com.hltc.entity.Ignore;
+import com.hltc.entity.Neglect;
 import com.hltc.entity.Praise;
 import com.hltc.entity.PwdHash;
 import com.hltc.entity.Site;
@@ -42,6 +37,7 @@ import com.hltc.entity.VerifyCode;
 import com.hltc.service.IGrainService;
 import com.hltc.service.IUserService;
 import com.hltc.util.BeanUtil;
+import com.hltc.util.CommonUtil;
 import com.hltc.util.SecurityUtil;
 import com.hltc.util.UUIDUtil;
 
@@ -56,11 +52,15 @@ public class GrainServiceImpl implements IGrainService{
 	@Autowired
 	private IPraiseDao praiseDao;
 	@Autowired
-	private IIgnoreDao ignoreDao;
+	private INeglectDao neglectDao;
 	@Autowired
 	private IFavoriteDao favoriteDao;
 	@Autowired
 	private ICommentDao commentDao;
+	@Autowired
+	private IUserDao userDao;
+	@Autowired
+	private IFriendDao friendDao;
 	
 	@Override
 	public String generateGrainId(String cityCode) {
@@ -71,19 +71,11 @@ public class GrainServiceImpl implements IGrainService{
 
 	@Override
 	public HashMap publish(JSONObject jobj) {
-		String userId = jobj.getString("userId");
+		Long userId = jobj.getLong("userId");
 		//step1 存储site
-		String siteSource = jobj.getString("siteSource");
-		Site site = new Site();
-		site.setSource(siteSource);
+		Boolean isSiteExist = false;   //site在数据库中是否存在
 		String siteId = null;
-		if("0".equals(siteSource)){  //用户自定义的地点
-			siteId = UUIDUtil.getUUID();
-		}else if("1".equals(siteSource)){ //高德的POI
-			siteId = (String)jobj.get("siteId");
-			if(null == siteId) return Result.fail(ErrorCode.PARAMS_ERROR, "Missing parameters: siteId");
-		}
-		
+		String siteSource = jobj.getString("siteSource");
 		Double lat = null, lon = null;
 		try {
 			lat = Double.valueOf(jobj.getString("lat"));
@@ -93,32 +85,47 @@ public class GrainServiceImpl implements IGrainService{
 			return Result.fail(ErrorCode.PARAMS_ERROR, "wrong value of  parameters: lat or lon");
 			//TODO　log
 		}
-		site.setSiteId(siteId);
-		site.setName(jobj.getString("siteName"));
-		site.setAddress(jobj.getString("siteAddress"));
-		site.setTelphone(jobj.getString("sitePhone"));
-		site.setGtype(jobj.getString("siteType"));
-		site.setMtype(jobj.getString("mcateId"));
-		site.setLat(lat);
-		site.setLon(lon);
-		siteDao.saveOrUpdate(site);
+		
+		if("0".equals(siteSource)){  //用户自定义的地点
+			siteId = UUIDUtil.getUUID();
+		}else if("1".equals(siteSource)){ //高德的POI
+			siteId = (String)jobj.get("siteId");
+			if(null == siteId) return Result.fail(ErrorCode.PARAMS_ERROR, "Missing parameters: siteId");
+			if(null != siteDao.findById(siteId)){
+				isSiteExist = true;
+			}
+		}
+		siteId = siteId.toUpperCase();
+		
+		if(!isSiteExist){  //site在数据库中不存在
+			HashMap setParams = new HashMap();
+			setParams.put("site_id", siteId);
+			setParams.put("source", siteSource);
+			setParams.put("name", jobj.getString("siteName"));
+			setParams.put("address", jobj.getString("siteAddress"));
+			setParams.put("phone", jobj.get("sitePhone"));
+			setParams.put("gtype", jobj.get("siteType"));
+			setParams.put("mtype", jobj.get("mcateId"));
+			setParams.put("lat", lat);
+			setParams.put("lon", lon);
+			int exeResult = siteDao.saveBySQL(setParams, "site");
+			if(exeResult == -1) return Result.fail(ErrorCode.DB_ERROR, "site save failed.");
+		}
 		
 		//step2 创建麦粒
 		Grain grain = new Grain();
 		String cityCode = jobj.getString("cityCode");
 		Long time = System.currentTimeMillis();
-		String gid = generateGrainId(cityCode);
 		
-		grain.setGid(gid);
-		grain.setIsPublic(jobj.getString("isPublic"));
+		grain.setIsPublic("1".equals(jobj.getString("isPublic")));
 		grain.setLat(lat);
 		grain.setLon(lon);
 		grain.setMcateId(jobj.getString("mcateId"));
 		grain.setSiteId(siteId);
 		grain.setText(jobj.getString("text"));
 		grain.setUserId(userId);
-		grain.setTime(time);
-		grainDao.saveOrUpdate(grain);
+		grain.setCreateTime(time);
+		grain = grainDao.saveOrUpdateWithBack(grain);
 		
 		//step3 创建相册	
 		JSONArray array = (JSONArray)jobj.get("images");
@@ -129,102 +136,304 @@ public class GrainServiceImpl implements IGrainService{
 			for(int i = 0; i < images.size(); i++){
 				MorphDynaBean image = (MorphDynaBean) images.get(i);
 				UserPhotoAlbum userPhotoAlbum = new UserPhotoAlbum();
-				userPhotoAlbum.setGid(gid);
+				userPhotoAlbum.setGid(grain.getGid());
 				userPhotoAlbum.setPhoto((String)image.get("large"));
 				userPhotoAlbum.setPhotoSmall((String)image.get("small"));
-				userPhotoAlbum.setTime(time);
-				userPhotoAlbum.setUpaId(UUIDUtil.getUUID());
+				userPhotoAlbum.setCreateTime(time);
 				userPhotoAlbum.setUserId(userId);
 				list.add(userPhotoAlbum);
 			}
-			userPhotoAlbumDao.batchAdd(list);
+			return userPhotoAlbumDao.batchAdd(list) ?  Result.success() : Result.fail(ErrorCode.DB_ERROR);
 		}
 	
 		return Result.success();
 	}
 
 	@Override
-	public HashMap praise(String gid, String userId) {
+	public HashMap praise(Long gid, Long userId) {
 		Praise praise = praiseDao.findByGidAndUserId(gid, userId);
+		int exeResult = 0;
 		if(null == praise){
-			praise = new Praise(UUIDUtil.getUUID());
-			praise.setGid(gid);
-			praise.setUserId(userId);
-			praise.setTime(System.currentTimeMillis());
-			praiseDao.saveOrUpdate(praise);
+			HashMap setParams = new HashMap();
+			
+			setParams.put("gid", gid);
+			setParams.put("user_id", userId);
+			setParams.put("create_time",System.currentTimeMillis());
+			exeResult = praiseDao.saveBySQL(setParams, "praise");
 		}else{
-			praiseDao.delete(praise);
+			HashMap setParams = new HashMap();
+			HashMap whereParams = new HashMap();
+			setParams.put("is_deleted", !praise.getIsDeleted());
+			setParams.put("create_time", System.currentTimeMillis());
+			whereParams.put("praise_id", praise.getPraiseId());
+			exeResult = praiseDao.updateByShard(setParams, "praise", "gid", praise.getGid(), whereParams);
 		}
-		return Result.success();
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 
 	@Override
-	public HashMap ignore(String gid, String userId) {
-		Ignore ignore = ignoreDao.findByGidAndUserId(gid, userId);
-		if(null == ignore){
-			ignore = new Ignore(UUIDUtil.getUUID());
-			ignore.setGid(gid);
-			ignore.setUserId(userId);
-			ignore.setTime(System.currentTimeMillis());
-			ignoreDao.saveOrUpdate(ignore);
+	public HashMap ignore(Long gid, Long userId) {
+		Neglect neglect = neglectDao.findByGidAndUserId(gid, userId);
+		int exeResult = 0; 
+		if(null == neglect){
+			HashMap setParams = new HashMap();
+			setParams.put("gid", gid);
+			setParams.put("user_id", userId);
+			setParams.put("create_time", System.currentTimeMillis());
+			exeResult = neglectDao.saveBySQL(setParams, "neglect");
 		}else{
-			ignoreDao.delete(ignore);
+			HashMap setParams = new HashMap();
+			HashMap whereParams = new HashMap();
+			setParams.put("is_deleted", !neglect.getIsDeleted());
+			setParams.put("create_time", System.currentTimeMillis());
+			whereParams.put("neglect_id", neglect.getNeglectId());
+			exeResult = neglectDao.updateByShard(setParams, "neglect", "gid", neglect.getGid(), whereParams);
 		}
-		return Result.success();
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 
 	@Override
-	public HashMap favor(String gid, String userId) {
-		// TODO Auto-generated method stub
+	public HashMap favor(Long gid, Long userId) {
 		Favorite favorite = favoriteDao.findByGidAndUserId(gid, userId);
+		int exeResult = 0;
 		if(null == favorite){
-			favorite = new Favorite(UUIDUtil.getUUID());
-			favorite.setGid(gid);
-			favorite.setUserId(userId);
-			favorite.setTime(System.currentTimeMillis());
-			favoriteDao.saveOrUpdate(favorite);
+			HashMap setParams = new HashMap();
+			setParams.put("gid", gid);
+			setParams.put("user_id", userId);
+			setParams.put("create_time", System.currentTimeMillis());			
+			exeResult = favoriteDao.saveBySQL(setParams, "favorite");
 		}else{
-			favoriteDao.delete(favorite);
+			HashMap setParams = new HashMap();
+			HashMap whereParams = new HashMap();
+			setParams.put("is_deleted", !favorite.getIsDeleted());
+			setParams.put("create_time", System.currentTimeMillis());
+			whereParams.put("favor_id", favorite.getFavorId());
+			exeResult = favoriteDao.updateByShard(setParams, "favorite", "user_id", userId, whereParams);
 		}
-		return Result.success();
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 
 	@Override
 	public HashMap createComment(JSONObject jobj) {
-		String cid = UUIDUtil.getUUID();
-		Comment comment = new Comment(cid);
+		Comment comment = new Comment();
+		Long userId = jobj.getLong("userId");
+		Long gid = jobj.getLong("gid");
 		comment.setContent(jobj.getString("text"));
-		comment.setGid(jobj.getString("gid"));
-		comment.setTime(System.currentTimeMillis());
-		comment.setUserId(jobj.getString("user_id"));
-		String  toCid = (String)jobj.get("to_cid");
-		if(null != toCid || "".equals(toCid)){
-			Comment temp = commentDao.findById(toCid);
-			if(null == temp){
+		comment.setGid(gid);
+		comment.setCreateTime(System.currentTimeMillis());
+		comment.setUserId(userId);
+		Long tocid = null;
+		if(null != jobj.get("tocid")){
+			tocid = jobj.getLong("tocid");
+		}
+		
+		if(null != tocid){
+			HashMap whereParams = new HashMap();
+			whereParams.put("cid", tocid);
+			List<Comment> list = commentDao.findByShard("comment", "gid", gid, whereParams);
+			if(null == list || list.size() == 0){
 				return Result.fail(ErrorCode.COMMENT_NOT_EXIST);
 			}
-			comment.setTocid(toCid);
+			if(userId.equals(list.get(0).getUserId())){
+				return Result.fail(ErrorCode.COMMENT_FAILED, "不能对自己的评论进行评论");
+			}
+			comment.setTocid(tocid);
 		}
-		commentDao.saveOrUpdate(comment);
+		comment = commentDao.saveOrUpdateWithBack(comment);
 		
 		HashMap map = new HashMap();
-		map.put("cid", cid);
+		map.put("cid", comment.getCid());
 		return Result.success(map);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public HashMap deleteGrain(String gid) {
+	public HashMap getGrainDetail(Long gid, Long userId)  throws Exception{
+		HashMap result = new HashMap();
+		try{
+		
+		//step1 : find grain
 		Grain grain = grainDao.findById(gid);
 		if(null == grain){
 			return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
 		}
+		result.put("text", grain.getText());
+		result.put("createTime", grain.getCreateTime());
+		//step2 : find publisher
+		User user = userDao.findById(grain.getUserId());
+		HashMap publisher = new HashMap();
+		if(null == user){
+			return Result.fail(ErrorCode.USER_NOT_EXIST);
+		}
+		publisher.put("userId", user.getUserId());
+		publisher.put("portrait", user.getPortrait());
+		publisher.put("portraitSmall", user.getPortraitSmall());
+		publisher.put("nickName", user.getNickName());
+		publisher.put("remark", "备注");
+		result.put("publisher", publisher);
+		//step3 : find site
+		Site site = siteDao.findById(grain.getSiteId());
+		HashMap siteInfo = new HashMap();
+		if(null == site){
+			return Result.fail(ErrorCode.DB_ERROR);
+		}
+		siteInfo.put("siteId", site.getSiteId());
+		siteInfo.put("lon", site.getLon());
+		siteInfo.put("lat", site.getLat());
+		siteInfo.put("name", site.getName());
+		siteInfo.put("address", site.getAddress());
+		siteInfo.put("phone", site.getPhone());
+		result.put("site", siteInfo);
+		//step4 : find images
+		List<UserPhotoAlbum> upaList = userPhotoAlbumDao.findByShard("user_photo_album", "gid", gid, null);
+		List images = new ArrayList();
+		if(null != upaList && upaList.size()>0){
+			for(UserPhotoAlbum upa : upaList){
+				HashMap image = new HashMap();
+				image.put("small", upa.getPhotoSmall());
+				image.put("large", upa.getPhoto());
+				images.add(image);
+			}
+			result.put("images",images);
+		}
+		//step5: find praise
+		HashMap whereParams = new HashMap();
+		whereParams.put("is_deleted", false);
+		List<Praise> praiseList = praiseDao.findByShard("praise", "gid", gid, whereParams);
 		
-		grain.setIsDeleted(true);
+		//step6: find comment
+		List<Comment> comList = commentDao.findByShard("comment", "gid", gid, whereParams);
 		
-		grainDao.saveOrUpdate(grain);
+		//step7: 将点赞和评论的用户筛选（只筛选自己的朋友）
+		List<Long> ids = new ArrayList<Long>();
+		for(Praise p : praiseList){
+			ids.add(p.getUserId());
+		}
 		
-		return Result.success();
+		for(Comment c : comList){
+			ids.add(c.getUserId());
+		}
+		List<Friend> friends = friendDao.findByUserIds(userId, CommonUtil.getDistinct(ids));
+		List<Long> uid = new ArrayList<Long>();
+		for(Friend f : friends){
+			uid.add(f.getUserFid());
+		}
+		
+		//step8: 获取用户信息
+		List<User> users = userDao.findByIds(uid);
+		
+		
+		//step9: 将用户信息 填入 praise 和 comment中
+		List<HashMap> praiseInfo = new ArrayList<HashMap>();
+		List<HashMap> comInfo = new ArrayList<HashMap>();
+		
+		for(User u : users){
+			Long tmpId = u.getUserId();
+			for(Friend f : friends){
+				if(f.getUserFid().equals(tmpId)){
+					for(Praise p : praiseList){
+						if(p.getUserId().equals(tmpId)){
+							HashMap data = new HashMap();
+							data.put("userId", tmpId);
+							data.put("nickName", u.getNickName());
+							data.put("remark", f.getRemark());
+							praiseInfo.add(data);
+							break;
+						}
+					}
+					
+					for(Comment c : comList){
+						if(c.getUserId().equals(tmpId)){
+							HashMap data = new HashMap();
+							data.put("cid", c.getCid());
+							data.put("tocid", c.getTocid());
+							data.put("userId", tmpId);
+							data.put("nickName", u.getNickName());
+							data.put("remark", f.getRemark());
+							data.put("text", c.getContent());
+							data.put("createTime", c.getCreateTime());
+							comInfo.add(data);
+							break;
+						}
+					}
+					
+					break;
+				}
+			}
+		}
+		
+		result.put("praise", praiseInfo);
+		result.put("comment", comInfo);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return result;
 	}
-	
+
+	@Override
+	public List<HashMap> getRecommendGrains(String type, Long id) {
+		List<Grain> grains = null;
+		if("visitor".equalsIgnoreCase(type)){
+			grains = grainDao.getVrecommendGrains(id);
+		}else if("user".equalsIgnoreCase(type)){
+			grains = grainDao.getUrecommendGrains(id);
+		}
+		
+	    List<Long> uids = new ArrayList<Long>();
+	    List<Long> grainIds = new ArrayList<Long>();
+	    List<String> siteids = new ArrayList<String>();
+	    List<User> users= null;
+	    List<Site> sites = null;
+	    List<UserPhotoAlbum> images = null;
+	    List<HashMap> result = new ArrayList<HashMap>();
+	    
+		for(Grain grain : grains){
+			uids.add(grain.getUserId());
+			grainIds.add(grain.getGid());
+			siteids.add(grain.getSiteId());
+		}
+		
+		if(null != grains && grains.size() > 0){
+			users = userDao.findByIds(uids);
+			images = userPhotoAlbumDao.findByGrainIds(grainIds);
+			sites = siteDao.findByIds(siteids);
+		}
+		
+		for(Grain grain : grains){
+			Long gid = grain.getGid();
+			Long uid = grain.getUserId();
+			String siteId = grain.getSiteId();
+			HashMap data = new HashMap();	
+			data.put("grainId", gid);
+			data.put("text", grain.getText());
+			data.put("userId", uid);
+			
+			for(User u : users){
+				if(u.getUserId().equals(uid)){
+					data.put("portraitSmall", u.getPortraitSmall());
+					break;
+				}
+			}
+			
+			for(Site s : sites){
+				if(s.getSiteId().equals(siteId)){
+					data.put("site", s);
+					break;
+				}
+			}
+			
+			for(UserPhotoAlbum image : images){
+				if(image.getGid().equals(gid)){
+					data.put("image", image.getPhoto());
+					break;
+				}
+			}
+			
+			result.add(data);
+		}
+		
+		return result;
+	}
 
 }

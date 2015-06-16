@@ -50,15 +50,16 @@ public class AuthController {
 	@RequestMapping(value="/oss_token.json", method=RequestMethod.POST)
 	public @ResponseBody Object login_by_token(@RequestBody JSONObject jobj){
 		//step0 参数验证
-		Map result = parametersValidate(jobj, new String[]{"user_id","token","content"}, true, String.class);
+		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token","content"}, true, String.class);
 		if(null == result.get(Result.SUCCESS)) return result;
 		
 		//step1 登录验证
-		result = userService.loginByToken(jobj.getString("user_id"), jobj.getString("token"));
+		result = userService.loginByToken(jobj.getLong("userId"), jobj.getString("token"));
 		if(null == result.get(Result.SUCCESS)) return result;
 	
 		JSONObject o = new JSONObject();
-		
 		try {
 			o.put("ossToken", generateOSSToken("wxGYeoOqFGIikopt", "eQyS38ArhJo0fIotIuLoiz0FCx0J4N", jobj.getString("content")));
 		} catch (Exception e) {

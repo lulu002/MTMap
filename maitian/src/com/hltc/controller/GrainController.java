@@ -37,12 +37,18 @@ import com.hltc.common.Pager;
 import com.hltc.common.Result;
 import com.hltc.dao.ICommentDao;
 import com.hltc.dao.IGrainDao;
+import com.hltc.dao.IRecommendDao;
 import com.hltc.dao.ITokenDao;
 import com.hltc.entity.Comment;
 import com.hltc.entity.Grain;
+import com.hltc.entity.Recommend;
 import com.hltc.entity.Token;
+import com.hltc.entity.Vrecommend;
 import com.hltc.service.IGrainService;
 import com.hltc.service.IUserService;
+import com.hltc.util.OSSUtil;
+import com.hltc.util.UUIDUtil;
+
 import static com.hltc.util.SecurityUtil.*;
 
 
@@ -63,6 +69,8 @@ public class GrainController {
 	private ICommentDao commentDao;
 	@Autowired
 	private ITokenDao tokenDao;
+	@Autowired
+	private IRecommendDao recommendDao;
 	
 	@RequestMapping(value="/publish_batch.json/{minLine}/{maxLine}/{cityCode}", method = RequestMethod.POST)
 	public @ResponseBody Object publishByFile(HttpServletRequest request, @PathVariable Integer minLine, @PathVariable Integer maxLine, @PathVariable String cityCode){
@@ -170,7 +178,9 @@ public class GrainController {
 	@RequestMapping(value="/publish.json", method=RequestMethod.POST)
 	public @ResponseBody Object publish(@RequestBody JSONObject jobj){
 		//step0 参数验证
-		Map result = parametersValidate(jobj, new String[]{"userId","token","mcateId","siteName","siteAddress","lon","lat","cityCode","isPublic","text"}, true, String.class);
+		Map result =  parametersValidate(jobj, "userId",true,new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token","mcateId","siteName","siteAddress","lon","lat","cityCode","isPublic","text"}, true, String.class);
 		if(null == result.get(Result.SUCCESS))	return result;
 		result = parametersValidate(jobj, new String[]{"siteId","sitePhone", "siteType"}, false, String.class);
 		if(null == result.get(Result.SUCCESS))	return result;
@@ -180,13 +190,16 @@ public class GrainController {
 		if(null == result.get(Result.SUCCESS))	return result;
 				
 		//step1 登录验证
-		String userId = jobj.getString("userId");
+		Long userId = jobj.getLong("userId");
 		result = userService.loginByToken(userId, jobj.getString("token"));
-		
-		if(null == result.get("success")){
-			return result;
-		}
+		if(null == result.get("success")) return result;
 		return  grainService.publish(jobj);
+	}
+	
+	@RequestMapping(value="/getCategories.json", method=RequestMethod.GET)
+	public @ResponseBody Object getCategories(@RequestBody JSONObject jobj){
+		
+		return null;
 	}
 	
 	/**
@@ -210,7 +223,6 @@ public class GrainController {
 		
 		map.put("grain", list);
 		map.put("pager", pager);
-		System.out.println("success");
 		return Result.success(map);
 	}
 	
@@ -222,25 +234,17 @@ public class GrainController {
 	@RequestMapping(value="/home_query.json", method=RequestMethod.POST)
 	public @ResponseBody Object homeQuery(@RequestBody JSONObject jobj){
 		//step0 参数检验
-		HashMap<String, Class> map = new HashMap<String, Class>();
-		Map result = null;
-		map.put("user_id", String.class);
-		map.put("token", String.class);
-		map.put("mcate_id", String.class);
-		map.put("city_code", String.class);
-		map.put("lon", String.class);
-		map.put("lat", String.class);
-		result = parametersValidate(jobj, map);
-		if(null == result.get("success")){
-			return result;
-		}
+		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS)) return result;
+		result = parametersValidate(jobj, new String[]{"token","mcateId","cityCode","lon","lat"}, true, String.class);
+		if(null == result.get(Result.SUCCESS)) return result;
+		result = parametersValidate(jobj, new String[]{"radius"}, false, String.class);
+		if(null == result.get(Result.SUCCESS)) return result;
 		
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
+		Long userId = jobj.getLong("userId");
 		result = userService.loginByToken(userId, jobj.getString("token"));
-		if(null == result.get("success")){
-			return result;
-		}
+		if(null == result.get(Result.SUCCESS)) return result;
 		
 		//step2 查询麦粒
 		Double lon = null, lat = null, radius = null;
@@ -250,12 +254,11 @@ public class GrainController {
 			Object r = jobj.get("radius");
 			radius = null == r ? null: Double.valueOf(r.toString());
 		} catch (Exception e) {
+			e.printStackTrace();
 			return Result.fail(ErrorCode.PARAMS_ERROR, "parameters eorr: lon,lat and radius should be double string");
-			//TODO log exception
 		}
 	
-		List<Grain> grains = grainDao.findFriendsGrain(userId, jobj.getString("mcate_id"), jobj.getString("city_code"), lon, lat, radius);
-		
+		List<Grain> grains = grainDao.findFriendsGrain(userId, jobj.getString("mcateId"), jobj.getString("cityCode"), lon, lat, radius);
 		return Result.success(grains);
 	}
 	
@@ -266,15 +269,18 @@ public class GrainController {
 	 */
 	@RequestMapping(value="/praise.json", method=RequestMethod.POST)
 	public @ResponseBody Object praise(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
-		HashMap result = userService.loginByToken(userId, jobj.getString("token"));
-		if(null == result.get("success")){
-			return result;
-		}
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step2 点赞表创建或者删除记录
-		return grainService.praise(jobj.getString("gid"), userId);
+		return grainService.praise(jobj.getLong("gid"), userId);
 	}
 	
 	/**
@@ -282,21 +288,21 @@ public class GrainController {
 	 * @param jobj
 	 * @return
 	 */
-	@RequestMapping(value="/ignore.json", method=RequestMethod.POST)
+	@RequestMapping(value="/neglect.json", method=RequestMethod.POST)
 	public @ResponseBody Object ignore(@RequestBody JSONObject jobj){
 		//step0 参数验证
-		
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
-		HashMap result = userService.loginByToken(userId, jobj.getString("token"));
-		if(null == result.get("success")){
-			return result;
-		}
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step2 创建忽略记录
-		return grainService.ignore(jobj.getString("gid"), userId);
-		
+		return grainService.ignore(jobj.getLong("gid"), userId);
 	}
 	
 	/**
@@ -306,15 +312,19 @@ public class GrainController {
 	 */
 	@RequestMapping(value="/favor.json", method=RequestMethod.POST)
 	public @ResponseBody Object favor(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
-		HashMap result = userService.loginByToken(userId, jobj.getString("token"));
-		if(null == result.get("success")){
-			return result;
-		}
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step2 创建收藏记录
-		return grainService.favor(jobj.getString("gid"), userId);
+		return grainService.favor(jobj.getLong("gid"), userId);
 	}
 	
 	/**
@@ -324,20 +334,29 @@ public class GrainController {
 	 */
 	@RequestMapping(value="/comment.json", method=RequestMethod.POST)
 	public @ResponseBody Object comment(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token","text"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, "tocid", false,new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
-		HashMap result = userService.loginByToken(userId, jobj.getString("token"));
-		if(null == result.get("success")){
-			return result;
-		}
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step2 麦粒是否存在
-		Grain grain = grainDao.findById(jobj.getString("gid"));
-		if(null == grain){
-			return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		Grain grain = grainDao.findById(jobj.getLong("gid"));
+		if(null == grain) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		try {
+			result = grainService.createComment(jobj);
+		} catch (Exception e) {
+			result = Result.fail(ErrorCode.DB_ERROR);
+			e.printStackTrace();
 		}
-		
-		return grainService.createComment(jobj);
+		return  result;
 	}
 	
 	/**
@@ -347,26 +366,32 @@ public class GrainController {
 	 */
 	@RequestMapping(value="/del_comment.json", method=RequestMethod.POST)
 	public @ResponseBody Object delComment(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","cid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
-		HashMap result = userService.loginByToken(userId, (String)jobj.get("token"));
-		if(null == result.get("success")){
-			return result;
-		}
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, (String)jobj.get("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
 	
 		//step2 删除评论
-		Comment comment = commentDao.findById((String)jobj.get("cid"));
+		Comment comment = commentDao.findById(jobj.getLong("cid"));
 		if(null == comment){
 			return Result.fail(ErrorCode.COMMENT_NOT_EXIST);
 		}
 		
-		if(!userId.equals(comment.getUserId())){
+		if(!userId.equals(comment.getUserId()) || comment.getIsDeleted()){
 			return Result.fail(ErrorCode.COMMENT_DEL_FAILED);
 		}
-		
-		commentDao.delete(comment);
-		
-		return Result.success();
+		HashMap setParams = new HashMap();
+		HashMap whereParams = new HashMap();
+		setParams.put("is_deleted", true);
+		whereParams.put("cid", comment.getCid());
+		int exeResult = commentDao.updateByShard(setParams, "comment", "gid", comment.getGid(), whereParams);
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 	
 	/**
@@ -376,15 +401,24 @@ public class GrainController {
 	 */
 	@RequestMapping(value="/detail.json", method=RequestMethod.POST)
 	public @ResponseBody Object getDetail(@RequestBody JSONObject jobj){
-		//step1 登录验证
-		String userId = jobj.getString("user_id");
-		HashMap result = userService.loginByToken(userId, jobj.getString("token"));
-		if(null == result.get("success")){
-			return result;
-		}
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
 		
-		//TODO
-		return null;
+		//step1 登录验证
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		//step3
+		try {
+			result =  grainService.getGrainDetail(jobj.getLong("gid"), userId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
 	}
 	
 	/**
@@ -394,23 +428,145 @@ public class GrainController {
 	 */
 	@RequestMapping(value="/delete.json", method=RequestMethod.POST)
 	public @ResponseBody Object delete(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		
 		//step1 登录验证
-		String userId = jobj.getString("user_id");
-		HashMap result = userService.loginByToken(userId, jobj.getString("token"));
-		if(null == result.get("success")){
-			return result;
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		//step2 查询麦粒
+		Long gid = jobj.getLong("gid");
+		Grain grain = grainDao.findById(gid);
+		if(null == grain){
+			return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		}
+		if(!userId.equals(grain.getUserId()) || grain.getIsDeleted()){
+			return Result.fail(ErrorCode.GRAIN_DEL_FAILED);
+		}
+		HashMap setParams = new HashMap();
+		setParams.put("is_deleted", true);
+		int exeResult = grainDao.updateByShard(setParams, "grain", "gid", gid, null);
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
+	}
+	
+	
+	/**
+	 * 修改麦粒
+	 * @param jobj
+	 * @return
+	 */
+	@RequestMapping(value="/update.json", method = RequestMethod.POST)
+	public @ResponseBody Object update(HttpServletRequest request){
+		DiskFileItemFactory factory = new DiskFileItemFactory();
+		// 使用系统临时路径
+		String path = System.getProperty("user.home");
+		System.out.println(path);
+		factory.setRepository(new File(path));
+		factory.setSizeThreshold(1024 * 1024);
+
+		ServletFileUpload upload = new ServletFileUpload(factory);
+		upload.setHeaderEncoding("utf-8");
+		
+		try{
+			List<FileItem> list = (List<FileItem>) upload.parseRequest(request);
+			for (FileItem item : list) {
+				// 获取表单的属性名字
+				String name = item.getFieldName();
+				// 如果获取的表单信息是普通的文本信息，上传有时候是混在表单中的，本例中不需要考虑
+				if (item.isFormField()) {  
+					String value = new String((item.getString("iso8859-1")).getBytes("iso8859-1"),"utf-8");
+					System.out.println(name+":"+value);
+				} else {
+//					获取上传路径
+					String value = item.getName();
+					String suffix = value.substring(value.indexOf("."));
+					int start = value.lastIndexOf("\\");
+//					获得上传文件名
+					String filename = value.substring(start + 1);
+//					将文件写到磁盘，如果不解析就成了文件上传功能了
+					item.write(new File(path, filename));  //写到服务器
+					String uri = path+File.separator+filename, newFileName = UUIDUtil.getUUID()+suffix;
+					OSSUtil.uploadFile("maitianditu", newFileName,uri);  //上传到OSS
+					File file = new File(uri);
+					if(file.isFile() && file.exists()){
+						file.delete();
+					}
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
 		}
 		
-		//step2 delete
-		return grainService.deleteGrain(jobj.getString("gid"));
+		return Result.success();
 	}
-	public static void main(String[] args) {
-		JSONObject o = new JSONObject();
-		o.put("23","234.33");
+	
+	/**
+	 * 获取推荐麦粒
+	 * @return
+	 */
+	@RequestMapping(value="getRecommendGrain.json", method=RequestMethod.POST)
+	public @ResponseBody Object getRecommendGrain(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class,Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
 		
-		Object ob = o.get("23");
+		//step1 登录验证
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
 		
+		//step2 获取热门的麦粒推荐给用户
+		List<HashMap> data = null;
+		try {
+			data = grainService.getRecommendGrains("user",userId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		HashMap resultData = new HashMap();
+		resultData.put("grain",data);
+		return Result.success(resultData);
+	} 
+	
+	/**
+	 * 已阅读麦粒
+	 * @param jobj
+	 * @return
+	 */
+	@RequestMapping(value="read_grain.json", method=RequestMethod.POST)
+	public @ResponseBody Object readGrain(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"gid","userId"}, true, new Class[]{Integer.class,Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
 		
-		System.out.println(Double.valueOf(ob.toString()));
+		//step1 登录验证
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		//step1 	创建recommend
+		Long gid = jobj.getLong("gid");
+		Recommend recom = null;
+		HashMap whereParams = new HashMap();
+		whereParams.put("user_id", userId);
+		List<Recommend> list = recommendDao.findByShard("recommend", "gid", gid, whereParams);
+		if(null == list || list.size() == 0){
+			recom = new Recommend();
+			recom.setCreateTime(System.currentTimeMillis());
+			recom.setGid(jobj.getLong("gid"));
+			recom.setUserId(userId);
+			recommendDao.saveOrUpdate(recom);
+		}
+		
+		return Result.success();	
 	}
+	
 }

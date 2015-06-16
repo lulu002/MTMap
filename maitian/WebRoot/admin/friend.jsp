@@ -81,7 +81,8 @@
                         </div>
                         <div class="mt20"></div>
                         <button type="button" class="btn btn-default fr mr20">添加</button>
-                        <div class="alert alert-danger fl p6 mb0 error-info hidden" role="alert">
+                        <div class="alert alert-danger fl p6 mb0 error-info " role="alert">
+                            userId不存在
                         </div>
                       </div>
                     </div>
@@ -101,7 +102,8 @@
                         </div>
                         <div class="mt20"></div>
                         <button type="button" class="btn btn-default fr mr20">添加</button>
-                        <div class="alert alert-danger fl p6 mb0 error-info hidden" role="alert">
+                        <div class="alert alert-danger fl p6 mb0 error-info " role="alert">
+                            userId不存在
                         </div>
                       </div>
                     </div>                    
@@ -124,7 +126,6 @@
     <!-- Bootstrap Core JavaScript -->
     <script src="${path}/js/bootstrap.min.js"></script>
     <script src="${path}/js/global.js?v=${rand}"></script>
-    <script src="${path}/js/friend.js?v=${rand}"></script>
 
 </body>
 

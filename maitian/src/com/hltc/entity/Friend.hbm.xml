@@ -6,22 +6,22 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.Friend" table="friend" catalog="maitian">
-        <id name="fid" type="java.lang.String">
-            <column name="fid" length="32" />
-            <generator class="assigned" />
+        <id name="fid" type="java.lang.Long">
+            <column name="fid" />
+            <generator class="identity" />
         </id>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>用户ID</comment>
             </column>
         </property>
-        <property name="userFid" type="java.lang.String">
-            <column name="user_fid" length="32">
+        <property name="userFid" type="java.lang.Long">
+            <column name="user_fid">
                 <comment>用户朋友的ID</comment>
             </column>
         </property>
-        <property name="isStar" type="java.lang.String">
-            <column name="is_star" length="1">
+        <property name="isStar" type="java.lang.Boolean">
+            <column name="is_star">
                 <comment>是否为星标好友</comment>
             </column>
         </property>

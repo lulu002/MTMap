@@ -1,7 +1,5 @@
 package com.hltc.entity;
 
-import java.util.Date;
-
 /**
  * UserProfile entity. @author MyEclipse Persistence Tools
  */
@@ -10,9 +8,9 @@ public class UserProfile implements java.io.Serializable {
 
 	// Fields
 
-	private String upId;
-	private String userId;
-	private Date birthday;
+	private Long upId;
+	private Long userId;
+	private Long birthday;
 	private String email;
 	private String gender;
 	private Long registerTime;
@@ -23,15 +21,9 @@ public class UserProfile implements java.io.Serializable {
 	public UserProfile() {
 	}
 
-	/** minimal constructor */
-	public UserProfile(String upId) {
-		this.upId = upId;
-	}
-
 	/** full constructor */
-	public UserProfile(String upId, String userId, Date birthday, String email,
-			String gender, Long registerTime) {
-		this.upId = upId;
+	public UserProfile(Long userId, Long birthday, String email, String gender,
+			Long registerTime) {
 		this.userId = userId;
 		this.birthday = birthday;
 		this.email = email;
@@ -41,27 +33,27 @@ public class UserProfile implements java.io.Serializable {
 
 	// Property accessors
 
-	public String getUpId() {
+	public Long getUpId() {
 		return this.upId;
 	}
 
-	public void setUpId(String upId) {
+	public void setUpId(Long upId) {
 		this.upId = upId;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
-	public Date getBirthday() {
+	public Long getBirthday() {
 		return this.birthday;
 	}
 
-	public void setBirthday(Date birthday) {
+	public void setBirthday(Long birthday) {
 		this.birthday = birthday;
 	}
 

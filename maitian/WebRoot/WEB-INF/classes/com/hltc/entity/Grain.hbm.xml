@@ -6,9 +6,9 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.Grain" table="grain" catalog="maitian">
-        <id name="gid" type="java.lang.String">
-            <column name="gid" length="32" />
-            <generator class="assigned" />
+        <id name="gid" type="java.lang.Long">
+            <column name="gid" />
+            <generator class="identity" />
         </id>
         <property name="mcateId" type="java.lang.String">
             <column name="mcate_id" length="6">
@@ -16,22 +16,22 @@
             </column>
         </property>
         <property name="siteId" type="java.lang.String">
-            <column name="site_id" length="32">
+            <column name="site_id" length="22">
                 <comment>场所ID</comment>
             </column>
         </property>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>用户ID</comment>
             </column>
         </property>
-        <property name="isPublic" type="java.lang.String">
-            <column name="is_public" length="1" not-null="true">
+        <property name="isPublic" type="java.lang.Boolean">
+            <column name="is_public" not-null="true">
                 <comment>是否公开</comment>
             </column>
         </property>
         <property name="text" type="java.lang.String">
-            <column name="text" length="200">
+            <column name="text" length="400">
                 <comment>文字内容</comment>
             </column>
         </property>
@@ -45,14 +45,19 @@
                 <comment>纬度</comment>
             </column>
         </property>
-        <property name="time" type="java.lang.Long">
-            <column name="time">
+        <property name="createTime" type="java.lang.Long">
+            <column name="create_time">
                 <comment>发布时间</comment>
             </column>
         </property>
         <property name="isDeleted" type="java.lang.Boolean">
             <column name="is_deleted">
                 <comment>是否删除</comment>
+            </column>
+        </property>
+        <property name="recommend" type="java.lang.Short">
+            <column name="recommend">
+                <comment>推荐级别</comment>
             </column>
         </property>
     </class>

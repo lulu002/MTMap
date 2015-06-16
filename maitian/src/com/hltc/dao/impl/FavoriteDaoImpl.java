@@ -15,7 +15,7 @@ import com.hltc.entity.User;
 public class FavoriteDaoImpl extends GenericHibernateDao<Favorite> implements IFavoriteDao{
 
 	@Override
-	public Favorite findByGidAndUserId(String gid, String userId) {
+	public Favorite findByGidAndUserId(Long gid, Long userId) {
 		Session session = getSession();
 		List<Favorite> list = session.createQuery("from Favorite where gid = ? and userId = ?").setParameter(0, gid).setParameter(1, userId).list();
  		session.close();

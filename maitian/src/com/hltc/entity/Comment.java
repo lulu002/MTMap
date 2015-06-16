@@ -8,12 +8,13 @@ public class Comment implements java.io.Serializable {
 
 	// Fields
 
-	private String cid;
-	private String gid;
+	private Long cid;
+	private Long gid;
 	private String content;
-	private String tocid;
-	private Long time;
-	private String userId;
+	private Long tocid;
+	private Long createTime;
+	private Long userId;
+	private Boolean isDeleted;
 
 	// Constructors
 
@@ -22,36 +23,36 @@ public class Comment implements java.io.Serializable {
 	}
 
 	/** minimal constructor */
-	public Comment(String cid) {
-		this.cid = cid;
+	public Comment(Long gid) {
+		this.gid = gid;
 	}
 
 	/** full constructor */
-	public Comment(String cid, String gid, String content, String tocid,
-			Long time, String userId) {
-		this.cid = cid;
+	public Comment(Long gid, String content, Long tocid, Long createTime,
+			Long userId, Boolean isDeleted) {
 		this.gid = gid;
 		this.content = content;
 		this.tocid = tocid;
-		this.time = time;
+		this.createTime = createTime;
 		this.userId = userId;
+		this.isDeleted = isDeleted;
 	}
 
 	// Property accessors
 
-	public String getCid() {
+	public Long getCid() {
 		return this.cid;
 	}
 
-	public void setCid(String cid) {
+	public void setCid(Long cid) {
 		this.cid = cid;
 	}
 
-	public String getGid() {
+	public Long getGid() {
 		return this.gid;
 	}
 
-	public void setGid(String gid) {
+	public void setGid(Long gid) {
 		this.gid = gid;
 	}
 
@@ -63,28 +64,36 @@ public class Comment implements java.io.Serializable {
 		this.content = content;
 	}
 
-	public String getTocid() {
+	public Long getTocid() {
 		return this.tocid;
 	}
 
-	public void setTocid(String tocid) {
+	public void setTocid(Long tocid) {
 		this.tocid = tocid;
 	}
 
-	public Long getTime() {
-		return this.time;
+	public Long getCreateTime() {
+		return this.createTime;
 	}
 
-	public void setTime(Long time) {
-		this.time = time;
+	public void setCreateTime(Long createTime) {
+		this.createTime = createTime;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	public Boolean getIsDeleted() {
+		return this.isDeleted;
+	}
+
+	public void setIsDeleted(Boolean isDeleted) {
+		this.isDeleted = isDeleted;
 	}
 
 }

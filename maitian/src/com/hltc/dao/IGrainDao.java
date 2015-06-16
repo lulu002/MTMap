@@ -17,8 +17,7 @@ public interface IGrainDao extends GenericDao<Grain>{
 	 * @param radius 查询半径
 	 * @return
 	 */
-	public List findFriendsGrain(String userId, String mtcate_id, String cityCode, Double lon, Double lat, Double radius);
-
+	public List findFriendsGrain(Long userId, String mtcate_id, String cityCode, Double lon, Double lat, Double radius);
 	
 	/**
 	 * 通过查询条件查询麦粒
@@ -33,4 +32,19 @@ public interface IGrainDao extends GenericDao<Grain>{
 	 * @return
 	 */
 	public Integer countByCondition(JSONObject jobj);
+	
+	/**
+	 * 获取游客推荐麦粒
+	 * @param vid
+	 * @return
+	 */
+	public List<Grain> getVrecommendGrains(Long vid);
+	
+	/**
+	 * 获取用户推荐麦粒
+	 * @param userId
+	 * @return
+	 */
+	public List<Grain> getUrecommendGrains(Long userId);
+	
 }

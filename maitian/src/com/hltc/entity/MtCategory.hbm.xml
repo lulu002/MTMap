@@ -25,8 +25,8 @@
                 <comment>父级目录的ID</comment>
             </column>
         </property>
-        <property name="hasChild" type="java.lang.String">
-            <column name="has_child" length="1">
+        <property name="hasChild" type="java.lang.Boolean">
+            <column name="has_child">
                 <comment>是否有子目录</comment>
             </column>
         </property>

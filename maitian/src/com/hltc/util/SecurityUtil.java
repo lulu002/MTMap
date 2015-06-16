@@ -99,8 +99,52 @@ public class SecurityUtil {
 		
 		return Result.success();
 	}
+	/**
+	 * 检测某个参数是否为某些类型
+	 * @param paramJson
+	 * @param key
+	 * @param required
+	 * @param clazzs
+	 * @return
+	 */
+	public final static HashMap parametersValidate(JSONObject paramJson, String key, Boolean required, Class[] clazzs){
+		Object o = paramJson.get(key);
+		if(null == o && required) return Result.fail(ErrorCode.PARAMS_ERROR, "missing parameter:" + key);
+		
+		if(null != o){
+			for(Class clazz : clazzs){
+				if(clazz.isInstance(o)) return Result.success(); 
+			}
+			return Result.fail(ErrorCode.PARAMS_ERROR, "wrong parameter type of " + key);
+		}
+		return Result.success();
+	}
 	
-		public final static HashMap parametersValidate(JSONObject paramJson, String[] keys, Boolean required, Class clazz){
+	/**
+	 * 检测某些参数是否为某些类型
+	 * @param paramJson
+	 * @param keys
+	 * @param required
+	 * @param clazzs
+	 * @return
+	 */
+	public final static HashMap parametersValidate(JSONObject paramJson, String[] keys,Boolean required, Class[] clazzs){
+		HashMap result = null;
+		for(String key : keys){
+			result = parametersValidate(paramJson, key, required, clazzs);
+			if(null == result.get(Result.SUCCESS))	return result;
+		}
+		return Result.success();
+	}
+	/**
+	 * 检测多个参数是否符合类型
+	 * @param paramJson
+	 * @param keys
+	 * @param required
+	 * @param clazz
+	 * @return
+	 */
+	public final static HashMap parametersValidate(JSONObject paramJson, String[] keys, Boolean required, Class clazz){
 		Object o = null;
 		for(String key: keys){
 			o = paramJson.get(key);

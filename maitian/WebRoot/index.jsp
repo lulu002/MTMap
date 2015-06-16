@@ -1,91 +1,85 @@
-﻿<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
-<%
-String path = request.getContextPath();
-String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
-%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@include file="common.jsp" %>
+<!DOCTYPE html>
+<html lang="zh">
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-  <head>
-    <base href="<%=basePath%>">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>麦田的后花园</title>
+    <link rel="shortcut icon" href="images/favicon.ico"/>
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/sb-admin.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link  href="${path}/css/global.css?v=${rand}" rel="stylesheet" >
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+		<%@include file="nav.jsp" %>
+
+        <div id="page-wrapper">
+
+            <div class="container-fluid">
+
+                <!-- Page Heading -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">
+                            Maitian <small>backyard</small>
+                        </h1>
+                        <ol class="breadcrumb">
+                            <li class="active">
+                                <i class="fa fa-dashboard"></i> index
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                <div class="row center" style="padding:130px 0;font-size:100px;">
+                    MTMap                    
+                </div>
+            </div>
+            <!-- /.container-fluid -->
+
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="${path}/js/jquery.js"></script>
+
     
-    <title>My JSP 'index.jsp' starting page</title>
-	<meta http-equiv="pragma" content="no-cache">
-	<meta http-equiv="cache-control" content="no-cache">
-	<meta http-equiv="expires" content="0">    
-	<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
-	<meta http-equiv="description" content="This is my page">
-	<!--
-	<link rel="stylesheet" type="text/css" href="styles.css">
-	-->
-	<script src="http://lib.sinaapp.com/js/jquery/1.9.1/jquery-1.9.1.min.js"></script>
-	
-  </head>
-  
-  <body>
-  	<div class="testContainer"></div>
-    <input type="button" value="新增一个API测试" onclick="addNewAPITest();"/>
-    
-    <script>
-    	$.ajaxSetup({  
-	        //contentType : 'application/json;charset=utf-8;'  
-	    });  
-	    
-    	function addNewAPITest(){
-    		var container = $('.testContainer');
-    		var html = '<div class="testCase">' +
-					   '测试地址:<input class="testUrl" style="width:400px;"/> <br/>' +
-		          	   '请求方式：' +
-		    			'<select class="requestMethod">' +
-							'<option value="GET">GET</option> ' +
-							'<option value="POST">POST</option>'+   
-		    			'</select>'+
-		    			'<br/>'+
-		         		'请求参数：'+
-		    			'<textarea class="params" style="width:600px;height:100px;">'+
-					    '</textarea>'+
-		    			'<br/>'+
-		         		'返回结果:'+
-		    			'<textarea class="result" style="width:600px;height:150px;">'+
-					    '</textarea>'+
-		    			'<br/>'+
-		    			'<input type="button" class="sendBtn" value="发送" onclick="sendRequest(this);"/>'+
-	    				'</div>';
-	    				
-	    	container.append(html);
-    	};
-    	
-    	
-    	function sendRequest(obj){
-    		var parent = $(obj).parent();
-    		var url = parent.find('.testUrl').val(),
-	  			method = parent.find('.requestMethod').val(),
-	  			params = JSON.parse(parent.find('.params').val());
-	  		var data;
-	  			
-	  			
-	  		if(method == "POST"){
-	  			data = JSON.stringify(params);
-	  		}else{
-	  			data = params;
-	  		}
-	  			
-	  		$.ajax({
-	  			url : url,
-	  			type : method,
-	  			dataType : "json",
-	  			contentType: "application/json",
-	  			data : data,
-	  			success : function(data){
-	  				parent.find(".result").val(JSON.stringify(data));
-	  			},
-	  			error: function(data){
-	  				parent.find(".result").val(JSON.stringify(data));
-	  			}
-	  		});
-    	}
-	  </script>
-  </body>
-  
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="${path}/js/bootstrap.min.js"></script>
+    <script src="${path}/js/global.js?v=${rand}"></script>
+
+</body>
 
 </html>

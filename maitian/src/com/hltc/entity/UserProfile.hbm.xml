@@ -6,17 +6,17 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.UserProfile" table="user_profile" catalog="maitian">
-        <id name="upId" type="java.lang.String">
-            <column name="up_id" length="32" />
-            <generator class="assigned" />
+        <id name="upId" type="java.lang.Long">
+            <column name="up_id" />
+            <generator class="identity" />
         </id>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>用户ID</comment>
             </column>
         </property>
-        <property name="birthday" type="java.util.Date">
-            <column name="birthday" length="10">
+        <property name="birthday" type="java.lang.Long">
+            <column name="birthday">
                 <comment>生日</comment>
             </column>
         </property>

@@ -8,8 +8,8 @@ public class Token implements java.io.Serializable {
 
 	// Fields
 
-	private String tokenId;
-	private String userId;
+	private Long tokenId;
+	private Long userId;
 	private Long createTime;
 	private String token;
 
@@ -19,14 +19,8 @@ public class Token implements java.io.Serializable {
 	public Token() {
 	}
 
-	/** minimal constructor */
-	public Token(String tokenId) {
-		this.tokenId = tokenId;
-	}
-
 	/** full constructor */
-	public Token(String tokenId, String userId, Long createTime, String token) {
-		this.tokenId = tokenId;
+	public Token(Long userId, Long createTime, String token) {
 		this.userId = userId;
 		this.createTime = createTime;
 		this.token = token;
@@ -34,19 +28,19 @@ public class Token implements java.io.Serializable {
 
 	// Property accessors
 
-	public String getTokenId() {
+	public Long getTokenId() {
 		return this.tokenId;
 	}
 
-	public void setTokenId(String tokenId) {
+	public void setTokenId(Long tokenId) {
 		this.tokenId = tokenId;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 

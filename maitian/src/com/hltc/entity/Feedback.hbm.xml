@@ -6,12 +6,12 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.Feedback" table="feedback" catalog="maitian">
-        <id name="feedId" type="java.lang.String">
-            <column name="feed_id" length="32" />
-            <generator class="assigned" />
+        <id name="feedId" type="java.lang.Long">
+            <column name="feed_id" />
+            <generator class="identity" />
         </id>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>用户ID</comment>
             </column>
         </property>
@@ -20,13 +20,16 @@
                 <comment>反馈内容</comment>
             </column>
         </property>
-        <property name="time" type="java.lang.Long">
-            <column name="time" />
+        <property name="createTime" type="java.lang.Long">
+            <column name="create_time" />
         </property>
-        <property name="isDealed" type="java.lang.String">
-            <column name="is_dealed" length="1">
+        <property name="isDealed" type="java.lang.Boolean">
+            <column name="is_dealed">
                 <comment>工作人员是否已处理该反馈</comment>
             </column>
+        </property>
+        <property name="email" type="java.lang.String">
+            <column name="email" length="50" />
         </property>
     </class>
 </hibernate-mapping>

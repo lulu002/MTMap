@@ -1,6 +1,7 @@
 package com.hltc.service;
 
 import java.util.HashMap;
+import java.util.List;
 
 import net.sf.json.JSONObject;
 
@@ -23,7 +24,7 @@ public interface IGrainService {
 	 * @param userId 点赞的用户id
 	 * @return
 	 */
-	public HashMap praise(String gid, String userId);
+	public HashMap praise(Long gid, Long userId);
 	
 	/**
 	 * 忽略麦粒
@@ -31,7 +32,7 @@ public interface IGrainService {
 	 * @param userId 用户id
 	 * @return
 	 */
-	public HashMap ignore(String gid, String userId);
+	public HashMap ignore(Long gid, Long userId);
 	
 	/**
 	 * 收藏麦粒
@@ -39,7 +40,7 @@ public interface IGrainService {
 	 * @param userId 用户id
 	 * @return
 	 */
-	public HashMap favor(String gid, String userId);
+	public HashMap favor(Long gid, Long userId);
 	
 	/**
 	 * 创建评论
@@ -49,9 +50,20 @@ public interface IGrainService {
 	public HashMap createComment(JSONObject jobj);
 	
 	/**
-	 * 删除麦粒
-	 * @param gid 麦粒id
+	 * 通过userId和gid获取麦粒详情
+	 * @param gid
+	 * @param userId
+	 * @return
+	 * @throws Exception 
+	 */
+	public HashMap getGrainDetail(Long gid, Long userId) throws Exception;
+	
+	/**
+	 * 获取推荐麦粒
+	 * @param type 类型 visitor or user
+	 * @param id
 	 * @return
 	 */
-	public HashMap deleteGrain(String gid);
+	public List<HashMap> getRecommendGrains(String type, Long id);
+	
 }

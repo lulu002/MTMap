@@ -1,5 +1,5 @@
 (function($){
-    var bathUrl = window.location.protocol + "//" + window.location.host +"/maitian/v1";
+    var bathUrl = window.location.protocol + "//" + window.location.host +"/backyard/v1";
     Grain = {
         isQuerying : false,
         grainTable : $('#grainList'), 

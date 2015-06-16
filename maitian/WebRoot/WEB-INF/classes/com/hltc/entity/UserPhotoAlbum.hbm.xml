@@ -6,32 +6,32 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.UserPhotoAlbum" table="user_photo_album" catalog="maitian">
-        <id name="upaId" type="java.lang.String">
-            <column name="upa_id" length="32" />
-            <generator class="assigned" />
+        <id name="upaId" type="java.lang.Long">
+            <column name="upa_id" />
+            <generator class="identity" />
         </id>
-        <property name="gid" type="java.lang.String">
-            <column name="gid" length="32">
+        <property name="gid" type="java.lang.Long">
+            <column name="gid">
                 <comment>麦粒ID</comment>
             </column>
         </property>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>用户ID</comment>
             </column>
         </property>
         <property name="photo" type="java.lang.String">
-            <column name="photo" length="100">
+            <column name="photo" length="200">
                 <comment>图片地址</comment>
             </column>
         </property>
-        <property name="time" type="java.lang.Long">
-            <column name="time">
+        <property name="createTime" type="java.lang.Long">
+            <column name="create_time">
                 <comment>上传时间</comment>
             </column>
         </property>
         <property name="photoSmall" type="java.lang.String">
-            <column name="photo_small" length="100">
+            <column name="photo_small" length="200">
                 <comment>缩略图</comment>
             </column>
         </property>

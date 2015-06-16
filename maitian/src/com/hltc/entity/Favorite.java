@@ -8,10 +8,11 @@ public class Favorite implements java.io.Serializable {
 
 	// Fields
 
-	private String favorId;
-	private String userId;
-	private String gid;
-	private Long time;
+	private Long favorId;
+	private Long userId;
+	private Long gid;
+	private Long createTime;
+	private Boolean isDeleted;
 
 	// Constructors
 
@@ -19,51 +20,54 @@ public class Favorite implements java.io.Serializable {
 	public Favorite() {
 	}
 
-	/** minimal constructor */
-	public Favorite(String favorId) {
-		this.favorId = favorId;
-	}
-
 	/** full constructor */
-	public Favorite(String favorId, String userId, String gid, Long time) {
-		this.favorId = favorId;
+	public Favorite(Long userId, Long gid, Long createTime, Boolean isDeleted) {
 		this.userId = userId;
 		this.gid = gid;
-		this.time = time;
+		this.createTime = createTime;
+		this.isDeleted = isDeleted;
 	}
 
 	// Property accessors
 
-	public String getFavorId() {
+	public Long getFavorId() {
 		return this.favorId;
 	}
 
-	public void setFavorId(String favorId) {
+	public void setFavorId(Long favorId) {
 		this.favorId = favorId;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
-	public String getGid() {
+	public Long getGid() {
 		return this.gid;
 	}
 
-	public void setGid(String gid) {
+	public void setGid(Long gid) {
 		this.gid = gid;
 	}
 
-	public Long getTime() {
-		return this.time;
+	public Long getCreateTime() {
+		return this.createTime;
 	}
 
-	public void setTime(Long time) {
-		this.time = time;
+	public void setCreateTime(Long createTime) {
+		this.createTime = createTime;
+	}
+
+	public Boolean getIsDeleted() {
+		return this.isDeleted;
+	}
+
+	public void setIsDeleted(Boolean isDeleted) {
+		this.isDeleted = isDeleted;
 	}
 
 }

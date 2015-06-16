@@ -29,6 +29,8 @@ public class ErrorCode {
 	public static final String PWD_HASH_NOT_EXIST = "10010";
 	//用户不存在
 	public static final String USER_NOT_EXIST = "10011";
+	//手机号码错误
+	public static final String PHONE_WRONG = "10012";
 	
 	//麦粒不存在
 	public static final String GRAIN_NOT_EXIST = "20001";
@@ -36,12 +38,22 @@ public class ErrorCode {
 	public static final String COMMENT_NOT_EXIST = "20002";
 	//评论删除失败
 	public static final String COMMENT_DEL_FAILED = "20003";
+	//评论失败
+	public static final String COMMENT_FAILED = "20004";
+	//麦粒删除失败
+	public static final String GRAIN_DEL_FAILED = "20005";
 	
+	//游客数量超出限制
+	public static final String VISITOR_COUNT_LIMIT_ERROR = "30001";
 	//请求失败
 	public static final String REQUEST_FAIL = "10011";
 	
 	//参数错误
 	public static final String PARAMS_ERROR = "e00001";
+	//数据库错误
+	public static final String DB_ERROR = "e00002";
+	//数据库记录重复，不唯一
+	public static final String ITEM_REPEAT = "e00003";
 	
 	public static final HashMap<Object, Object> errorMessage = new HashMap<Object, Object>();
 	
@@ -59,14 +71,18 @@ public class ErrorCode {
 		errorMessage.put(PWD_HASH_NOT_EXIST, "该密码hash不存在");
 		errorMessage.put(REQUEST_FAIL, "请求失败");
 		errorMessage.put(USER_NOT_EXIST, "用户不存在");
+		errorMessage.put(PHONE_WRONG, "手机号码错误");
+		
 		errorMessage.put(GRAIN_NOT_EXIST, "麦粒不存在");
 		errorMessage.put(COMMENT_NOT_EXIST, "评论不存在");
 		errorMessage.put(COMMENT_DEL_FAILED, "评论删除失败");
+		errorMessage.put(COMMENT_FAILED, "评论失败");
+		errorMessage.put(GRAIN_DEL_FAILED, "麦粒删除失败");
 		
+		errorMessage.put(VISITOR_COUNT_LIMIT_ERROR, "游客数量超出限制");
 		
 		errorMessage.put(PARAMS_ERROR, "参数错误");
-		
-		
-		
+		errorMessage.put(DB_ERROR, "数据库操作失败");
+		errorMessage.put(ITEM_REPEAT, "数据库记录重复，不唯一");
 	}
 }

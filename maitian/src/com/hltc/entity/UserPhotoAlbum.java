@@ -8,11 +8,11 @@ public class UserPhotoAlbum implements java.io.Serializable {
 
 	// Fields
 
-	private String upaId;
-	private String gid;
-	private String userId;
+	private Long upaId;
+	private Long gid;
+	private Long userId;
 	private String photo;
-	private Long time;
+	private Long createTime;
 	private String photoSmall;
 
 	// Constructors
@@ -21,45 +21,39 @@ public class UserPhotoAlbum implements java.io.Serializable {
 	public UserPhotoAlbum() {
 	}
 
-	/** minimal constructor */
-	public UserPhotoAlbum(String upaId) {
-		this.upaId = upaId;
-	}
-
 	/** full constructor */
-	public UserPhotoAlbum(String upaId, String gid, String userId,
-			String photo, Long time, String photoSmall) {
-		this.upaId = upaId;
+	public UserPhotoAlbum(Long gid, Long userId, String photo, Long createTime,
+			String photoSmall) {
 		this.gid = gid;
 		this.userId = userId;
 		this.photo = photo;
-		this.time = time;
+		this.createTime = createTime;
 		this.photoSmall = photoSmall;
 	}
 
 	// Property accessors
 
-	public String getUpaId() {
+	public Long getUpaId() {
 		return this.upaId;
 	}
 
-	public void setUpaId(String upaId) {
+	public void setUpaId(Long upaId) {
 		this.upaId = upaId;
 	}
 
-	public String getGid() {
+	public Long getGid() {
 		return this.gid;
 	}
 
-	public void setGid(String gid) {
+	public void setGid(Long gid) {
 		this.gid = gid;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
@@ -71,12 +65,12 @@ public class UserPhotoAlbum implements java.io.Serializable {
 		this.photo = photo;
 	}
 
-	public Long getTime() {
-		return this.time;
+	public Long getCreateTime() {
+		return this.createTime;
 	}
 
-	public void setTime(Long time) {
-		this.time = time;
+	public void setCreateTime(Long createTime) {
+		this.createTime = createTime;
 	}
 
 	public String getPhotoSmall() {

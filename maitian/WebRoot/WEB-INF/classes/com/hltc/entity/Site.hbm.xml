@@ -7,7 +7,7 @@
 <hibernate-mapping>
     <class name="com.hltc.entity.Site" table="site" catalog="maitian">
         <id name="siteId" type="java.lang.String">
-            <column name="site_id" length="32" />
+            <column name="site_id" length="22" />
             <generator class="assigned" />
         </id>
         <property name="lon" type="java.lang.Double">
@@ -30,8 +30,8 @@
                 <comment>地址</comment>
             </column>
         </property>
-        <property name="telphone" type="java.lang.String">
-            <column name="telphone" length="15">
+        <property name="phone" type="java.lang.String">
+            <column name="phone" length="130">
                 <comment>电话，POI才有这个信息</comment>
             </column>
         </property>

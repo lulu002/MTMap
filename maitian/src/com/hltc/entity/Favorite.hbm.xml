@@ -6,24 +6,27 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.Favorite" table="favorite" catalog="maitian">
-        <id name="favorId" type="java.lang.String">
-            <column name="favor_id" length="32" />
-            <generator class="assigned" />
+        <id name="favorId" type="java.lang.Long">
+            <column name="favor_id" />
+            <generator class="identity" />
         </id>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>用户ID</comment>
             </column>
         </property>
-        <property name="gid" type="java.lang.String">
-            <column name="gid" length="32">
+        <property name="gid" type="java.lang.Long">
+            <column name="gid">
                 <comment>麦粒ID</comment>
             </column>
         </property>
-        <property name="time" type="java.lang.Long">
-            <column name="time">
+        <property name="createTime" type="java.lang.Long">
+            <column name="create_time">
                 <comment>收藏时间</comment>
             </column>
+        </property>
+        <property name="isDeleted" type="java.lang.Boolean">
+            <column name="is_deleted" />
         </property>
     </class>
 </hibernate-mapping>

@@ -8,10 +8,10 @@ public class Friend implements java.io.Serializable {
 
 	// Fields
 
-	private String fid;
-	private String userId;
-	private String userFid;
-	private String isStar;
+	private Long fid;
+	private Long userId;
+	private Long userFid;
+	private Boolean isStar;
 	private String remark;
 	private String flag;
 
@@ -21,15 +21,9 @@ public class Friend implements java.io.Serializable {
 	public Friend() {
 	}
 
-	/** minimal constructor */
-	public Friend(String fid) {
-		this.fid = fid;
-	}
-
 	/** full constructor */
-	public Friend(String fid, String userId, String userFid, String isStar,
-			String remark, String flag) {
-		this.fid = fid;
+	public Friend(Long userId, Long userFid, Boolean isStar, String remark,
+			String flag) {
 		this.userId = userId;
 		this.userFid = userFid;
 		this.isStar = isStar;
@@ -39,35 +33,35 @@ public class Friend implements java.io.Serializable {
 
 	// Property accessors
 
-	public String getFid() {
+	public Long getFid() {
 		return this.fid;
 	}
 
-	public void setFid(String fid) {
+	public void setFid(Long fid) {
 		this.fid = fid;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
-	public String getUserFid() {
+	public Long getUserFid() {
 		return this.userFid;
 	}
 
-	public void setUserFid(String userFid) {
+	public void setUserFid(Long userFid) {
 		this.userFid = userFid;
 	}
 
-	public String getIsStar() {
+	public Boolean getIsStar() {
 		return this.isStar;
 	}
 
-	public void setIsStar(String isStar) {
+	public void setIsStar(Boolean isStar) {
 		this.isStar = isStar;
 	}
 

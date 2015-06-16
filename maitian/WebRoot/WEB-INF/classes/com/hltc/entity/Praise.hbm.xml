@@ -6,23 +6,28 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.Praise" table="praise" catalog="maitian">
-        <id name="praiseId" type="java.lang.String">
-            <column name="praise_id" length="32" />
-            <generator class="assigned" />
+        <id name="praiseId" type="java.lang.Long">
+            <column name="praise_id" />
+            <generator class="identity" />
         </id>
-        <property name="gid" type="java.lang.String">
-            <column name="gid" length="32">
+        <property name="gid" type="java.lang.Long">
+            <column name="gid">
                 <comment>麦粒ID</comment>
             </column>
         </property>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>点赞者的ID</comment>
             </column>
         </property>
-        <property name="time" type="java.lang.Long">
-            <column name="time">
+        <property name="createTime" type="java.lang.Long">
+            <column name="create_time">
                 <comment>点赞时间</comment>
+            </column>
+        </property>
+        <property name="isDeleted" type="java.lang.Boolean">
+            <column name="is_deleted">
+                <comment>是否取消点赞,即删除</comment>
             </column>
         </property>
     </class>

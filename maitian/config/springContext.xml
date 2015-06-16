@@ -34,12 +34,10 @@
 	
 	<!-- 配置sessionFactory -->
 	 <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
-		 <property name="configLocation">
+		<property name="configLocation">
 		 	<value>classpath:hibernate.cfg.xml</value>
-		 </property>
+		</property>
 	 </bean>
-	 
-	 
 
 	<!-- 事务管理配置  -->
 	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">  

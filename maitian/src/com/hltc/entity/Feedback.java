@@ -8,11 +8,12 @@ public class Feedback implements java.io.Serializable {
 
 	// Fields
 
-	private String feedId;
-	private String userId;
+	private Long feedId;
+	private Long userId;
 	private String content;
-	private Long time;
-	private String isDealed;
+	private Long createTime;
+	private Boolean isDealed;
+	private String email;
 
 	// Constructors
 
@@ -20,36 +21,31 @@ public class Feedback implements java.io.Serializable {
 	public Feedback() {
 	}
 
-	/** minimal constructor */
-	public Feedback(String feedId) {
-		this.feedId = feedId;
-	}
-
 	/** full constructor */
-	public Feedback(String feedId, String userId, String content, Long time,
-			String isDealed) {
-		this.feedId = feedId;
+	public Feedback(Long userId, String content, Long createTime,
+			Boolean isDealed, String email) {
 		this.userId = userId;
 		this.content = content;
-		this.time = time;
+		this.createTime = createTime;
 		this.isDealed = isDealed;
+		this.email = email;
 	}
 
 	// Property accessors
 
-	public String getFeedId() {
+	public Long getFeedId() {
 		return this.feedId;
 	}
 
-	public void setFeedId(String feedId) {
+	public void setFeedId(Long feedId) {
 		this.feedId = feedId;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
@@ -61,20 +57,28 @@ public class Feedback implements java.io.Serializable {
 		this.content = content;
 	}
 
-	public Long getTime() {
-		return this.time;
+	public Long getCreateTime() {
+		return this.createTime;
 	}
 
-	public void setTime(Long time) {
-		this.time = time;
+	public void setCreateTime(Long createTime) {
+		this.createTime = createTime;
 	}
 
-	public String getIsDealed() {
+	public Boolean getIsDealed() {
 		return this.isDealed;
 	}
 
-	public void setIsDealed(String isDealed) {
+	public void setIsDealed(Boolean isDealed) {
 		this.isDealed = isDealed;
+	}
+
+	public String getEmail() {
+		return this.email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 }

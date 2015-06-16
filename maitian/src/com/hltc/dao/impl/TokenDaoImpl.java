@@ -1,5 +1,7 @@
 package com.hltc.dao.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.hibernate.Session;
@@ -12,13 +14,33 @@ public class TokenDaoImpl extends GenericHibernateDao<Token> implements ITokenDa
 
 	@Override
 	public Token findByToken(String tokenStr) {
-		List<Token> list = getSession().createQuery("from Token where token = ? ").setParameter(0, tokenStr).list();
+		Session session = null;
+		List<Token> list = new ArrayList<Token>();
+		try{
+			session = getSession();
+			list = session.createQuery("from Token where token = ? ").setParameter(0, tokenStr).list();
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			session.close();
+		}
+		
 		return list.size() > 0 ? list.get(0) : null;
 	}
 
 	@Override
-	public Token findByUserId(String userId) {
-		List<Token> list = getSession().createQuery("from Token where userId = ? ").setParameter(0, userId).list();
+	public Token findByUserId(Long userId) {
+		Session session = null;
+		List<Token> list = new ArrayList<Token>();
+		try{
+			session = getSession();
+			list = session.createQuery("from Token where userId = ? ").setParameter(0, userId).list();
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			session.close();
+		}
+		
 		return list.size() > 0 ? list.get(0) : null;
 	}
 

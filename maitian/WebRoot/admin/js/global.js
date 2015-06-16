@@ -45,6 +45,12 @@
           "link" : "poi_collector.jsp?menu_id=M010300", 
           "icon" : "",
           "hasChild" : "false"
+        },{
+          "id" : "M010400",
+          "txt" : "API调试器", 
+          "link" : "poi_collector.jsp?menu_id=M010300", 
+          "icon" : "",
+          "hasChild" : "false"
         }]
       },
       {

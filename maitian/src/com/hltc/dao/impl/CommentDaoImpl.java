@@ -7,6 +7,4 @@ import com.hltc.entity.Comment;
 
 @Repository("commentDao")
 public class CommentDaoImpl extends GenericHibernateDao<Comment> implements ICommentDao{
-
-
 }

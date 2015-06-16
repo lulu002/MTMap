@@ -44,4 +44,8 @@ public class UUIDUtil {
         uuid = hexTo64(sb.toString());  
         return uuid;  
     }  
+    
+    public static void main(String[] args) {
+		System.out.println(getUUID().length());
+	}
 }  

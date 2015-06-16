@@ -4,5 +4,5 @@ import com.hltc.entity.Favorite;
 
 public interface IFavoriteDao extends GenericDao<Favorite>{
 	
-	public Favorite findByGidAndUserId(String gid, String userId);
+	public Favorite findByGidAndUserId(Long gid, Long userId);
 }

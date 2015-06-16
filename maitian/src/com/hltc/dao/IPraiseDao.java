@@ -11,5 +11,5 @@ public interface IPraiseDao extends GenericDao<Praise>{
 	 * @param userId
 	 * @return
 	 */
-	public Praise findByGidAndUserId(String gid, String userId);
+	public Praise findByGidAndUserId(Long gid, Long userId);
 }

@@ -11,7 +11,7 @@ import com.hltc.entity.PwdHash;
 public class PwdHashDaoImpl extends GenericHibernateDao<PwdHash> implements IPwdHashDao{
 
 	@Override
-	public PwdHash findByUserId(String userId) {
+	public PwdHash findByUserId(Long userId) {
 		List<PwdHash> list = getSession().createQuery("from PwdHash where userId = ? ").setParameter(0, userId).list();
 		return list.size() > 0 ? list.get(0) : null;
 	}

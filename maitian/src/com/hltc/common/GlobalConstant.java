@@ -32,5 +32,20 @@ public class GlobalConstant {
 	public static final String UMENG_MESSAGE_ANDROID_APPKEY = "5549747467e58ed626001c0a";
 	public static final String UMENG_MESSAGE_ANDROID_APP_MASTER_SECRET = "wfxoibaylo1nxqvkzcovoiumy4wuaelp";
 	
-	public static final String ENV = "test";
+	public static final String ALIYUN_ACCESSKEY_ID = "wxGYeoOqFGIikopt";
+	public static final String ALIYUN_ACCESSKEY_SECRET = "eQyS38ArhJo0fIotIuLoiz0FCx0J4N";
+	
+	//容联云通讯
+	public static final String CLOOPEN_PRO_URL = "app.cloopen.com";  //(生产) Rest URL
+	public static final String CLOOPEN_DEV_URL = "sandboxapp.cloopen.com"; //(开发) Rest URL
+	public static final String CLOOPEN_PORT = "8883";  
+	public static final String CLOOPEN_ACCOUNT_SID = "aaf98f8949d126580149d1efb6ca0095";   //主账号
+	public static final String CLOOPEN_AUTH_TOKEN = "1b975439287449bf89e3cc0e3c20d55b";  //主账号令牌
+	public static final String CLOOPEN_MAITIN_APP_ID = "aaf98f894c9d994b014cb714c8d81290";  //麦田地图app id
+	public static final String CLOOPEN_MAITIN_APP_TOKEN = "569f968bad8faa78e9f0270930bcf625"; //麦田地图app token
+	public static final String CLOOPEN_SMS_ID = "21396";   //短信模板id  发送验证码
+	
+	//游客
+	public static final Integer VISITOR_LIMIT_COUNT = 1000;   //单个ip的游客数量 
+	public static final String ENV = "pro";
 }

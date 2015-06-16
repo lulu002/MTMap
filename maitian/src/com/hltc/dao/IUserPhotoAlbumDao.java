@@ -12,4 +12,11 @@ public interface IUserPhotoAlbumDao extends GenericDao<UserPhotoAlbum>{
 	 * @return
 	 */
 	public Boolean batchAdd(List<UserPhotoAlbum> userPhotoAlbum);
+	
+	/**
+	 * 通过麦粒id集合获取图片
+	 * @param grainIds
+	 * @return
+	 */
+	public List<UserPhotoAlbum> findByGrainIds(List<Long> grainIds);
 }

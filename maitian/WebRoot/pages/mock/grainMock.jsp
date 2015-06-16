@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<form id="uploadGrainForm" action="http://localhost:8080/maitian/v1/grain/publish_batch.json/{minLine}/{maxLine}/{cityCode}" enctype="multipart/form-data" method="post">
+<form id="uploadGrainForm" action="http://localhost/backyard/v1/grain/publish_batch.json/{minLine}/{maxLine}/{cityCode}" enctype="multipart/form-data" method="post">
 	需要读取的最小行号：<input type="text" name="minLine" /><br />
 	需要读取的最大行号：<input type="text" name="maxLine" /><br />
 	城市编码：<input type="text" name="cityCode"/> <br/>

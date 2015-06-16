@@ -13,7 +13,7 @@ public class Site implements java.io.Serializable {
 	private Double lat;
 	private String name;
 	private String address;
-	private String telphone;
+	private String phone;
 	private String source;
 	private String gtype;
 	private String mtype;
@@ -31,14 +31,14 @@ public class Site implements java.io.Serializable {
 
 	/** full constructor */
 	public Site(String siteId, Double lon, Double lat, String name,
-			String address, String telphone, String source, String gtype,
+			String address, String phone, String source, String gtype,
 			String mtype) {
 		this.siteId = siteId;
 		this.lon = lon;
 		this.lat = lat;
 		this.name = name;
 		this.address = address;
-		this.telphone = telphone;
+		this.phone = phone;
 		this.source = source;
 		this.gtype = gtype;
 		this.mtype = mtype;
@@ -86,12 +86,12 @@ public class Site implements java.io.Serializable {
 		this.address = address;
 	}
 
-	public String getTelphone() {
-		return this.telphone;
+	public String getPhone() {
+		return this.phone;
 	}
 
-	public void setTelphone(String telphone) {
-		this.telphone = telphone;
+	public void setPhone(String phone) {
+		this.phone = phone;
 	}
 
 	public String getSource() {

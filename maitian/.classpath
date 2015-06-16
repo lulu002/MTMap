@@ -77,5 +77,10 @@
 	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/slf4j-api-1.5.8.jar"/>
 	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/slf4j-log4j12-1.5.8.jar"/>
 	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/poi-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/aliyun-sdk-oss-2.0.3.jar"/>
+	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/druid-1.0.13.jar"/>
+	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/hamcrest-core-1.1.jar"/>
+	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/jdom-1.1.jar"/>
+	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/pinyin4j-2.5.0.jar"/>
 	<classpathentry kind="output" path="WebRoot/WEB-INF/classes"/>
 </classpath>

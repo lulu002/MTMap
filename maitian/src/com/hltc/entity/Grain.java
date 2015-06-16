@@ -8,16 +8,17 @@ public class Grain implements java.io.Serializable {
 
 	// Fields
 
-	private String gid;
+	private Long gid;
 	private String mcateId;
 	private String siteId;
-	private String userId;
-	private String isPublic;
+	private Long userId;
+	private Boolean isPublic;
 	private String text;
 	private Double lon;
 	private Double lat;
-	private Long time;
+	private Long createTime;
 	private Boolean isDeleted;
+	private Short recommend;
 
 	// Constructors
 
@@ -26,15 +27,15 @@ public class Grain implements java.io.Serializable {
 	}
 
 	/** minimal constructor */
-	public Grain(String gid, String isPublic) {
+	public Grain(Long gid, Boolean isPublic) {
 		this.gid = gid;
 		this.isPublic = isPublic;
 	}
 
 	/** full constructor */
-	public Grain(String gid, String mcateId, String siteId, String userId,
-			String isPublic, String text, Double lon, Double lat, Long time,
-			Boolean isDeleted) {
+	public Grain(Long gid, String mcateId, String siteId, Long userId,
+			Boolean isPublic, String text, Double lon, Double lat,
+			Long createTime, Boolean isDeleted, Short recommend) {
 		this.gid = gid;
 		this.mcateId = mcateId;
 		this.siteId = siteId;
@@ -43,17 +44,18 @@ public class Grain implements java.io.Serializable {
 		this.text = text;
 		this.lon = lon;
 		this.lat = lat;
-		this.time = time;
+		this.createTime = createTime;
 		this.isDeleted = isDeleted;
+		this.recommend = recommend;
 	}
 
 	// Property accessors
 
-	public String getGid() {
+	public Long getGid() {
 		return this.gid;
 	}
 
-	public void setGid(String gid) {
+	public void setGid(Long gid) {
 		this.gid = gid;
 	}
 
@@ -73,19 +75,19 @@ public class Grain implements java.io.Serializable {
 		this.siteId = siteId;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
-	public String getIsPublic() {
+	public Boolean getIsPublic() {
 		return this.isPublic;
 	}
 
-	public void setIsPublic(String isPublic) {
+	public void setIsPublic(Boolean isPublic) {
 		this.isPublic = isPublic;
 	}
 
@@ -113,12 +115,12 @@ public class Grain implements java.io.Serializable {
 		this.lat = lat;
 	}
 
-	public Long getTime() {
-		return this.time;
+	public Long getCreateTime() {
+		return this.createTime;
 	}
 
-	public void setTime(Long time) {
-		this.time = time;
+	public void setCreateTime(Long createTime) {
+		this.createTime = createTime;
 	}
 
 	public Boolean getIsDeleted() {
@@ -127,6 +129,14 @@ public class Grain implements java.io.Serializable {
 
 	public void setIsDeleted(Boolean isDeleted) {
 		this.isDeleted = isDeleted;
+	}
+
+	public Short getRecommend() {
+		return this.recommend;
+	}
+
+	public void setRecommend(Short recommend) {
+		this.recommend = recommend;
 	}
 
 }

@@ -6,12 +6,12 @@
 -->
 <hibernate-mapping>
     <class name="com.hltc.entity.Comment" table="comment" catalog="maitian">
-        <id name="cid" type="java.lang.String">
-            <column name="cid" length="32" />
-            <generator class="assigned" />
+        <id name="cid" type="java.lang.Long">
+            <column name="cid" />
+            <generator class="identity" />
         </id>
-        <property name="gid" type="java.lang.String">
-            <column name="gid" length="32">
+        <property name="gid" type="java.lang.Long">
+            <column name="gid" not-null="true">
                 <comment>麦粒ID</comment>
             </column>
         </property>
@@ -20,20 +20,23 @@
                 <comment>评论内容</comment>
             </column>
         </property>
-        <property name="tocid" type="java.lang.String">
-            <column name="tocid" length="32">
+        <property name="tocid" type="java.lang.Long">
+            <column name="tocid">
                 <comment>被回复的评论ID</comment>
             </column>
         </property>
-        <property name="time" type="java.lang.Long">
-            <column name="time">
+        <property name="createTime" type="java.lang.Long">
+            <column name="create_time">
                 <comment>评论时间</comment>
             </column>
         </property>
-        <property name="userId" type="java.lang.String">
-            <column name="user_id" length="32">
+        <property name="userId" type="java.lang.Long">
+            <column name="user_id">
                 <comment>评论人</comment>
             </column>
+        </property>
+        <property name="isDeleted" type="java.lang.Boolean">
+            <column name="is_deleted" />
         </property>
     </class>
 </hibernate-mapping>

@@ -28,4 +28,6 @@ public class BeanUtil {
 		}
 		return params;
 	}
+	
+	
 }  

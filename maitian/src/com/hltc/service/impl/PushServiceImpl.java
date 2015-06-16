@@ -34,7 +34,7 @@ public class PushServiceImpl implements IPushService{
 		return Integer.toString((int)(System.currentTimeMillis() / 1000));
 	}
 
-	public void sendIOSCustomizedcast(String alias, String alert, Map<String, String> keyvalue) throws Exception {
+	public void sendIOSCustomizedcast(String alias, String alert, Map<String, Object> keyvalue) throws Exception {
 		IOSCustomizedcast customizedcast = new IOSCustomizedcast();
 		customizedcast.setAppMasterSecret(IOSAppMasterSecret);
 		customizedcast.setPredefinedKeyValue("appkey", this.IOSAppkey);
@@ -50,7 +50,7 @@ public class PushServiceImpl implements IPushService{
 		customizedcast.setPredefinedKeyValue("sound", "chime");
 		// TODO set 'production_mode' to 'true' if your app is under production mode
 		customizedcast.setPredefinedKeyValue("production_mode", "false");
-		for(Map.Entry<String, String> entry : keyvalue.entrySet()){    
+		for(Map.Entry<String, Object> entry : keyvalue.entrySet()){    
 			customizedcast.setPredefinedKeyValue(entry.getKey(), entry.getValue());
 		}  
 		customizedcast.send();

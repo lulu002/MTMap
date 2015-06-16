@@ -8,7 +8,8 @@ public class PwdHash implements java.io.Serializable {
 
 	// Fields
 
-	private String userId;
+	private Long phId;
+	private Long userId;
 	private String pwdSalt;
 	private String pwdHash;
 
@@ -19,12 +20,12 @@ public class PwdHash implements java.io.Serializable {
 	}
 
 	/** minimal constructor */
-	public PwdHash(String userId) {
+	public PwdHash(Long userId) {
 		this.userId = userId;
 	}
 
 	/** full constructor */
-	public PwdHash(String userId, String pwdSalt, String pwdHash) {
+	public PwdHash(Long userId, String pwdSalt, String pwdHash) {
 		this.userId = userId;
 		this.pwdSalt = pwdSalt;
 		this.pwdHash = pwdHash;
@@ -32,11 +33,19 @@ public class PwdHash implements java.io.Serializable {
 
 	// Property accessors
 
-	public String getUserId() {
+	public Long getPhId() {
+		return this.phId;
+	}
+
+	public void setPhId(Long phId) {
+		this.phId = phId;
+	}
+
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 

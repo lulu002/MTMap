@@ -1,5 +1,6 @@
 package com.hltc.dao.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Session;
@@ -13,16 +14,18 @@ public class UserPhotoAlbumDaoImpl extends GenericHibernateDao<UserPhotoAlbum> i
 
 	@Override
 	public Boolean batchAdd(List<UserPhotoAlbum> userPhotoAlbum) {
-		Session session = getSession();
+		Session session = null;
 		try{
+			session = getSession();
 			session.beginTransaction();
 			for(UserPhotoAlbum item : userPhotoAlbum){
-				session.saveOrUpdate(item);
+				session.save(item);
 			}
 			session.getTransaction().commit();
 		}catch(Exception e){
 			e.printStackTrace();
 			session.getTransaction().rollback();
+			return false;
 		}finally{
 			session.close();
 		}
@@ -30,4 +33,27 @@ public class UserPhotoAlbumDaoImpl extends GenericHibernateDao<UserPhotoAlbum> i
 		return true;
 	}
 
+	@Override
+	public List<UserPhotoAlbum> findByGrainIds(List<Long> ids) {
+		if(null == ids || ids.size() == 0) return null;
+		List<UserPhotoAlbum> images = null;
+		Session session = null;
+		StringBuilder sql = new StringBuilder("select * from user_photo_album where gid in (");
+		for(Long id : ids){
+			sql.append(id + ",");
+		}
+		sql.deleteCharAt(sql.length()-1);
+		sql.append(")");
+		
+		try{
+			session = getSession();
+			images = session.createSQLQuery(sql.toString()).addEntity(UserPhotoAlbum.class).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}finally{
+			session.close();
+		}
+		return images;
+	}
 }

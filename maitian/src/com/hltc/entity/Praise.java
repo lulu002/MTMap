@@ -8,10 +8,11 @@ public class Praise implements java.io.Serializable {
 
 	// Fields
 
-	private String praiseId;
-	private String gid;
-	private String userId;
-	private Long time;
+	private Long praiseId;
+	private Long gid;
+	private Long userId;
+	private Long createTime;
+	private Boolean isDeleted;
 
 	// Constructors
 
@@ -19,51 +20,54 @@ public class Praise implements java.io.Serializable {
 	public Praise() {
 	}
 
-	/** minimal constructor */
-	public Praise(String praiseId) {
-		this.praiseId = praiseId;
-	}
-
 	/** full constructor */
-	public Praise(String praiseId, String gid, String userId, Long time) {
-		this.praiseId = praiseId;
+	public Praise(Long gid, Long userId, Long createTime, Boolean isDeleted) {
 		this.gid = gid;
 		this.userId = userId;
-		this.time = time;
+		this.createTime = createTime;
+		this.isDeleted = isDeleted;
 	}
 
 	// Property accessors
 
-	public String getPraiseId() {
+	public Long getPraiseId() {
 		return this.praiseId;
 	}
 
-	public void setPraiseId(String praiseId) {
+	public void setPraiseId(Long praiseId) {
 		this.praiseId = praiseId;
 	}
 
-	public String getGid() {
+	public Long getGid() {
 		return this.gid;
 	}
 
-	public void setGid(String gid) {
+	public void setGid(Long gid) {
 		this.gid = gid;
 	}
 
-	public String getUserId() {
+	public Long getUserId() {
 		return this.userId;
 	}
 
-	public void setUserId(String userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
-	public Long getTime() {
-		return this.time;
+	public Long getCreateTime() {
+		return this.createTime;
 	}
 
-	public void setTime(Long time) {
-		this.time = time;
+	public void setCreateTime(Long createTime) {
+		this.createTime = createTime;
+	}
+
+	public Boolean getIsDeleted() {
+		return this.isDeleted;
+	}
+
+	public void setIsDeleted(Boolean isDeleted) {
+		this.isDeleted = isDeleted;
 	}
 
 }

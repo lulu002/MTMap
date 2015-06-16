@@ -5,6 +5,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import net.sf.json.JSONObject;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,9 +42,9 @@ public class UserServiceImpl implements IUserService{
 	private CCPRestSDK restAPI = new CCPRestSDK();
 	
 	public UserServiceImpl() {
-		restAPI.init("sandboxapp.cloopen.com", "8883");// 初始化服务器地址和端口，格式如下，服务器地址不需要写https://
-		restAPI.setAccount("aaf98f8949d126580149d1efb6ca0095", "1b975439287449bf89e3cc0e3c20d55b");// 初始化主帐号名称和主帐号令牌
-		restAPI.setAppId("aaf98f8949d575140149da8e079202ac");// 初始化应用ID
+		restAPI.init(GlobalConstant.CLOOPEN_PRO_URL, "8883");// 初始化服务器地址和端口，格式如下，服务器地址不需要写https://
+		restAPI.setAccount(GlobalConstant.CLOOPEN_ACCOUNT_SID, GlobalConstant.CLOOPEN_AUTH_TOKEN);// 初始化主帐号名称和主帐号令牌
+		restAPI.setAppId(GlobalConstant.CLOOPEN_MAITIN_APP_ID);// 初始化应用ID
 	}
 	
 	/**
@@ -78,7 +82,7 @@ public class UserServiceImpl implements IUserService{
 	}
 	
 	//检查密码是否正确
-	private Boolean checkPwd(String userId, String pwd){
+	private Boolean checkPwd(Long userId, String pwd){
 		PwdHash ph = pwdHashDao.findById(userId);
 		if(null != ph){
 			String str = ph.getPwdSalt() + pwd.toUpperCase();
@@ -87,7 +91,7 @@ public class UserServiceImpl implements IUserService{
 		return false;
 	}
 	
-	private Boolean createPwdHash(String userId, String pwd) {
+	private Boolean createPwdHash(Long userId,String pwd) {
 		PwdHash ph = new PwdHash();
 		String salt = UUIDUtil.getUUID();
 		ph.setUserId(userId);
@@ -97,16 +101,20 @@ public class UserServiceImpl implements IUserService{
 		return true;
 	}
 	
-	private HashMap updatePwdHash(String userId, String pwd){
+	private HashMap updatePwdHash(Long userId, String pwd){
 		PwdHash ph = pwdHashDao.findByUserId(userId);
-		
-		if(null != ph){
-			ph.setPwdHash(SecurityUtil.MD5(ph.getPwdSalt() + pwd.toUpperCase()));
-			pwdHashDao.saveOrUpdate(ph);
-			return Result.success(null);
-		}else{
-			return Result.fail(ErrorCode.PWD_HASH_NOT_EXIST);
+		HashMap setParams = new HashMap();
+		HashMap whereParams = new HashMap();
+		try{
+			if(null == ph) return Result.fail(ErrorCode.PWD_HASH_NOT_EXIST);;
+			setParams.put("pwd_hash", SecurityUtil.MD5(ph.getPwdSalt() + pwd.toUpperCase()));
+			whereParams.put("ph_id", ph.getPhId());
+			pwdHashDao.updateByShard(setParams, "pwd_hash", "user_id", userId, whereParams);
+		}catch(Exception e){
+			e.printStackTrace();
+			return Result.fail(ErrorCode.DB_ERROR);
 		}
+		return Result.success();
 	}
 	
 	
@@ -126,46 +134,56 @@ public class UserServiceImpl implements IUserService{
 		return userDao.findById(userId);
 	}
 
-	
 	@Override
-	public Object sendVerifyCode(String to, String userId, String type) {
+	public Object sendVerifyCode(String to, Long userId, String type) {
 		HashMap<String, Object> result = new HashMap<String, Object>();
+		HashMap<String, Object> setParams = new HashMap<String, Object>();
+		TreeMap<String, Object> whereParams = new TreeMap<String, Object>();
+		int exeResult = 0;
 		String verifyCodeStr = generateVerifyCode();
-		
-		VerifyCode verifyCode = verifyCodeDao.findByPhone(to);
+		Boolean isNew = false;
+		VerifyCode verifyCode = null;
+		if(null == userId){
+			verifyCode = verifyCodeDao.findByPhone(to);	
+		}else{
+			List list = verifyCodeDao.findByShard("verify_code", "user_id", userId, null);
+			if(null != list && list.size() > 0) verifyCode = (VerifyCode) list.get(0);
+		}
+		 
 		if(null == verifyCode){   
 			verifyCode = new VerifyCode();
-			verifyCode.setVcId(generateVerifyCodeId());
-			verifyCode.setPhone(to);
-			verifyCode.setTodayCount(1); 
+			setParams.put("phone", to);
+			setParams.put("today_count", 1);
+			setParams.put("user_id", null == userId ? (long)100 : userId);
+			isNew = true;
 		}else{
 			Integer count = verifyCode.getTodayCount();
 			if(!isDateEqual(new Date(), verifyCode.getCreateTime())){  //上次验证码创建时间不是今天
-				verifyCode.setTodayCount(1); 
+				setParams.put("today_count", 1);
 			}else if(count < GlobalConstant.VERIFY_CDOE_MAX_COUNT_PERDAY  ){
-				verifyCode.setTodayCount(count + 1);
+				setParams.put("today_count", count + 1);
 			}else{  //今日验证码超过次数限制
 				return Result.fail(ErrorCode.VERIFY_CODE_COUNT_LIMIT);
 			}
+			whereParams.put("vc_id", verifyCode.getVcId());
 		}
 		
-		verifyCode.setCreateTime(System.currentTimeMillis());
-		verifyCode.setVerifyCode(verifyCodeStr);
-		if(null != userId){
-			verifyCode.setUserId(userId);
-		}
-		
+		setParams.put("create_time", System.currentTimeMillis());
+		setParams.put("verify_code", verifyCodeStr);
+	
 		if("test".equalsIgnoreCase(GlobalConstant.ENV)) {
-			verifyCodeDao.saveOrUpdate(verifyCode);  
-			return Result.success();  //测试环境不发送验证码
+			if(isNew) exeResult = verifyCodeDao.saveBySQL(setParams, "verify_code");
+			else	exeResult = verifyCodeDao.updateByShard(setParams, "verify_code", "user_id", verifyCode.getUserId(),whereParams);
+			return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();  //测试环境不发送验证码
 		}
 		
-		HashMap<String, Object> sendResult = restAPI.sendTemplateSMS(to, "8859", new String[]{verifyCodeStr, GlobalConstant.VERIFY_CODE_VALID_TIME.toString()});
+		HashMap<String, Object> sendResult = restAPI.sendTemplateSMS(to, GlobalConstant.CLOOPEN_SMS_ID, new String[]{verifyCodeStr, GlobalConstant.VERIFY_CODE_VALID_TIME.toString()});
 		if(null == sendResult || !"000000".equals(sendResult.get("statusCode"))){ //验证码发送失败  
 			result = Result.fail(ErrorCode.VERIFY_CODE_SEND_FAIL);
 		}else{
-			verifyCodeDao.saveOrUpdate(verifyCode);  //TODO  需要返回值
-			result = Result.success();
+			if(isNew) exeResult = verifyCodeDao.saveBySQL(setParams, "verify_code");
+			else	exeResult = verifyCodeDao.updateByShard(setParams, "verify_code","user_id", verifyCode.getUserId(),whereParams);
+			result = exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success(); 
 		}
 		
 		return  result; 
@@ -176,54 +194,69 @@ public class UserServiceImpl implements IUserService{
 		VerifyCode verifyCode = verifyCodeDao.findByPhone(phoneNumber);
 		String code = null;  //数据库中存放的验证码
 		
-		if(null !=verifyCode ){
-			code = verifyCode.getVerifyCode();
-		}
+		if(null == verifyCode) return Result.fail(ErrorCode.DB_ERROR);
 		
+		code = verifyCode.getVerifyCode();
 		if(null == code || "" == code|| !verifyCodeStr.equals(code) ){ //验证码错误
 			return Result.fail(ErrorCode.VERIFY_CODE_WRONG);
 		}else if(System.currentTimeMillis() - verifyCode.getCreateTime() >= GlobalConstant.VERIFY_CODE_VALID_TIME * 60000){ //验证码超时
 			return Result.fail(ErrorCode.VERIFY_CODE_TIMEOUT);
 		}
 		
-		verifyCode.setVerifyCode(""); //验证成功将验证码置空
-		return Result.success(null);
+		HashMap<String, Object> setParams = new HashMap<String, Object>();
+		HashMap<String, Object> whereParams = new HashMap<String, Object>();
+		setParams.put("verify_code", "" );//验证成功将验证码置空
+		whereParams.put("vc_id",verifyCode.getVcId());
+		int exeResult = verifyCodeDao.updateByShard(setParams, "verify_code", "user_id", verifyCode.getUserId(), whereParams);
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success(null);
 	}
 
 	@Override
 	public User createUser(String phoneNumber, String pwd) {
 		User user = new User();
-		String userId = generateUserId(phoneNumber);
 		user.setNickName("改名吧"+phoneNumber);
 		user.setPhone(phoneNumber);
-		user.setUserId(userId);
 		user.setCoverImg(GlobalConstant.DEFAULT_COVER_IMG);
 		user.setPortrait(GlobalConstant.DEFAULT_POTRAIT);
 		user.setPortraitSmall(GlobalConstant.DEFAULT_POTRAIT_SMALL);
 		user.setCreateTime(System.currentTimeMillis());
-		userDao.saveOrUpdate(user);
-		createPwdHash(userId, pwd);
+		user = userDao.saveOrUpdateWithBack(user);
+		if(null != user){
+			createPwdHash(user.getUserId(), pwd);	
+		}
 		return user;
 	}
 	
 	@Override
-	public String generateToken(String userId) {
+	public String generateAndSaveOrUpdateToken(Long userId) {
+		int exeResult = 0;
 		String tokenStr = UUIDUtil.getUUID();
+		HashMap<String, Object> setParams = new HashMap<String, Object>();
+		HashMap<String, Object> whereParams = new HashMap<String, Object>();
+		Boolean isExist = false;
 		Token token = null;
+		
 		if(null != userId){
 			token = tokenDao.findByUserId(userId);
-			if(null == token){
-				token = new Token(UUIDUtil.getUUID());
-			}
-			token.setUserId(userId);
-		}else{
-			token = new Token(UUIDUtil.getUUID());
 		}
-		token.setToken(tokenStr);
-		token.setCreateTime(System.currentTimeMillis());
-
-		tokenDao.saveOrUpdate(token);
-		return tokenStr;
+		
+		if(null != token) 	{
+			isExist = true;
+		}
+		
+		setParams.put("token", tokenStr);
+		setParams.put("create_time", System.currentTimeMillis());
+		
+		if(isExist){
+			whereParams.put("token_id", token.getTokenId());
+			exeResult = tokenDao.updateByShard(setParams, "token", "user_id", token.getUserId(), whereParams);
+		}else{
+			token = new Token();
+			setParams.put("user_id",null == userId ? (long)100 : userId);
+			exeResult = tokenDao.saveBySQL(setParams, "token");
+		}
+		
+		return exeResult == -1  ? "-1" : tokenStr;
 	}
 
 	@Override
@@ -241,51 +274,73 @@ public class UserServiceImpl implements IUserService{
 	}
 
 	@Override
-	public Boolean deleteToken(Token token) {
-		try {
-			tokenDao.delete(token);
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	@Override
 	public HashMap login(String uniqueInfo, String pwd) {
 		User user = userDao.findByUniqueInfo(uniqueInfo);
 		if(null == user || !checkPwd(user.getUserId(), pwd)){
 			return Result.fail(ErrorCode.ACCOUNT_AUTHORIZED_FAILED);
 		}else{
 			HashMap map = (HashMap)BeanUtil.beanToMap(user);
-			map.put("token", generateToken(user.getUserId()));
+			map.put("token", generateAndSaveOrUpdateToken(user.getUserId()));
 			return Result.success(map);
 		}
 	}
 
 	@Override
-	public HashMap loginByToken(String userId, String tokenStr) {
-		Token token = tokenDao.findByToken(tokenStr);
-		if(null != token && token.getUserId().equals(userId) && 
-				System.currentTimeMillis() - token.getCreateTime() < GlobalConstant.TOKEN_VALID_TIME * 24 * 3600 * 1000){
-			return Result.success(null);
+	public HashMap loginByToken(Long userId, String tokenStr) {
+		User user = userDao.findById(userId);
+		if(null == user) return Result.fail(ErrorCode.ACCOUNT_AUTHORIZED_FAILED);
+		
+		HashMap<String, Object> whereParams = new HashMap<String, Object>();
+		whereParams.put("token", tokenStr);
+		List<Token>  list = tokenDao.findByShard("token", "user_id", userId, whereParams);
+		if(null == list) return Result.fail(ErrorCode.DB_ERROR);
+		int size = list.size();
+		if(size == 0) return Result.fail(ErrorCode.ACCOUNT_AUTHORIZED_FAILED);
+		if(size > 1) return Result.fail(ErrorCode.ITEM_REPEAT);
+		Token token = list.get(0);
+		if(System.currentTimeMillis() - token.getCreateTime() > GlobalConstant.TOKEN_VALID_TIME * 24 * 3600 * 1000){
+			return Result.fail(ErrorCode.TOKEN_LOGIN_FAIL);
 		}
-		return Result.fail(ErrorCode.TOKEN_LOGIN_FAIL);
+		
+		HashMap data = (HashMap)BeanUtil.beanToMap(user);
+		data.put("token", tokenStr);
+		return Result.success(data);
 	}
 
 	@Override
 	public HashMap resetPassword(String phoneNumber, String pwd) {
 		User user = userDao.findByPhone(phoneNumber);
-		if(null == user){
-			return Result.fail(ErrorCode.PHONE_NOT_REGISTERED);
-		}
-		
+		if(null == user)	return Result.fail(ErrorCode.PHONE_NOT_REGISTERED);
+		return updatePwdHash(user.getUserId(), pwd);
+	}
+	
+	@Override
+	public HashMap resetPassword(long userId, String pwd) {
+		User user = userDao.findById(userId);
+		if(null == user)	return Result.fail(ErrorCode.USER_NOT_EXIST);
 		return updatePwdHash(user.getUserId(), pwd);
 	}
 
 	@Override
-	public List<User> findUsersByPhones(Collection phones) {
-		return userDao.findByPhones(phones);
+	public HashMap verifyOnSettingPwd(Long userId, String verifyCodeStr) {
+		HashMap whereParams = new HashMap();
+		VerifyCode verifyCode = null;
+		String code = null;
+		whereParams.put("verify_code", verifyCodeStr);
+		List list = verifyCodeDao.findByShard("verify_code", "user_id", userId, whereParams);
+		if(null != list && list.size() > 0) verifyCode = (VerifyCode)list.get(0);
+		if(null == verifyCode) return Result.fail(ErrorCode.DB_ERROR);
+		
+		code = verifyCode.getVerifyCode();
+		if(null == code || "" == code|| !verifyCodeStr.equals(code) ){ //验证码错误
+			return Result.fail(ErrorCode.VERIFY_CODE_WRONG);
+		}else if(System.currentTimeMillis() - verifyCode.getCreateTime() >= GlobalConstant.VERIFY_CODE_VALID_TIME * 60000){ //验证码超时
+			return Result.fail(ErrorCode.VERIFY_CODE_TIMEOUT);
+		}
+		
+		HashMap set = new HashMap();
+		set.put("verify_code", "");
+		int exeResult = verifyCodeDao.updateByShard(set, "verify_code", "user_id", userId,null);
+		return exeResult !=1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
-
 }
