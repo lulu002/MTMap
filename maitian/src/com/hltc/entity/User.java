@@ -17,6 +17,7 @@ public class User implements java.io.Serializable {
 	private String portraitSmall;
 	private Long createTime;
 	private Boolean isLogin;
+	private String signature;
 
 	// Constructors
 
@@ -27,7 +28,7 @@ public class User implements java.io.Serializable {
 	/** full constructor */
 	public User(String userName, String phone, String portrait,
 			String coverImg, String nickName, String portraitSmall,
-			Long createTime, Boolean isLogin) {
+			Long createTime, Boolean isLogin, String signature) {
 		this.userName = userName;
 		this.phone = phone;
 		this.portrait = portrait;
@@ -36,6 +37,7 @@ public class User implements java.io.Serializable {
 		this.portraitSmall = portraitSmall;
 		this.createTime = createTime;
 		this.isLogin = isLogin;
+		this.signature = signature;
 	}
 
 	// Property accessors
@@ -110,6 +112,14 @@ public class User implements java.io.Serializable {
 
 	public void setIsLogin(Boolean isLogin) {
 		this.isLogin = isLogin;
+	}
+
+	public String getSignature() {
+		return this.signature;
+	}
+
+	public void setSignature(String signature) {
+		this.signature = signature;
 	}
 
 }

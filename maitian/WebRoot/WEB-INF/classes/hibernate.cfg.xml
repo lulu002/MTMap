@@ -12,7 +12,7 @@
 		</property>
 
 		<property name="connection.url">
-			jdbc:mysql://120.25.136.188:3306/maitian?autoReconnect=true&amp;rewriteBatchedStatements=true&amp;socketTimeout=30000&amp;connectTimeout=3000
+			jdbc:mysql://120.25.119.15:3306/maitian?autoReconnect=true&amp;rewriteBatchedStatements=true&amp;socketTimeout=30000&amp;connectTimeout=3000
 		</property>
 		<property name="connection.username">maitian</property>
 		<property name="connection.password">Chb6581669</property>

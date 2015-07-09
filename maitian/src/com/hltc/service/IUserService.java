@@ -63,4 +63,12 @@ public interface IUserService {
 	 * @return
 	 */
 	public HashMap verifyOnSettingPwd(Long userId, String verifyCode);
+	
+	/**
+	 * 通过手机号码数组，检测其中新的朋友
+	 * @param phones
+	 * @return
+	 */
+	public List getNewFriendByPhones(Long userId, Collection phones);
+	
 }

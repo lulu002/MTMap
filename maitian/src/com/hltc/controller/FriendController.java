@@ -73,11 +73,9 @@ public class FriendController {
 	@RequestMapping(value="/add_friend.json", method=RequestMethod.POST)
 	public @ResponseBody Object addFriend(@RequestBody JSONObject jobj){
 		//step0 参数验证
-		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
+		Map result = parametersValidate(jobj, new String[]{"userId","toId"}, true, new Class[]{Integer.class, Long.class});
 		if(null == result.get(Result.SUCCESS))	return result;
-		result = parametersValidate(jobj, "toId", true, new Class[]{Integer.class, Long.class});
-		if(null == result.get(Result.SUCCESS))	return result;
-		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		result = parametersValidate(jobj, new String[]{"token","text","remark"}, true, String.class);
 		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step1 登录验证
@@ -92,19 +90,35 @@ public class FriendController {
 	
 		//step3 在friend表中创建记录
 		Friend friend = friendDao.findByTwoId(userId, toId);
+		String text = jobj.getString("text");
+		String remark = jobj.getString("remark");
+		Long createTime = System.currentTimeMillis();
 		if(null == friend){
 			friend = new Friend();
 			friend.setUserId(userId);
 			friend.setUserFid(toId);
 			friend.setFlag("0");
+			friend.setIsDeleted(false);
+			friend.setIsMeAdd(true);
+			friend.setText(text);
+			friend.setCreateTime(createTime);
+			friend.setRemark(remark);
 			friendDao.save(friend);
+		}else{
+			if("1".equals(friend.getFlag())) return Result.fail(ErrorCode.FRIEND_EXIST);
+			HashMap setParams = new HashMap();
+			setParams.put("text", text);
+			setParams.put("create_time", createTime);
+			setParams.put("remark",remark);
+			friendDao.updateByShard(setParams, "friend", "user_id", userId, null);
 		}
 		
 		//step4 向友盟发送消息
-		Map<String, Object> map = new HashMap();
-		map.put("fromId", userId);
+		Map<String, String> map = new HashMap();
+		map.put("pUid", userId+"");   //点赞者id
 		try {
 			pushService.sendIOSCustomizedcast(toId+"", "您有新的好友请求", map);
+			pushService.sendAndroidCustomizedcast(toId+"","您有新的好友请求", map);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -142,6 +156,8 @@ public class FriendController {
 		Friend fromFriend = (Friend) list.get(0);
 		HashMap setParams = new HashMap();
 		setParams.put("flag", "1");
+		setParams.put("is_deleted", "0");
+		
 		friendDao.updateByShard(setParams, "friend", "user_id", fromId, null);
 		
 		Friend toFriend = new Friend();
@@ -149,11 +165,13 @@ public class FriendController {
 		setParams.put("user_id", userId);
 		setParams.put("user_fid", fromId);
 		setParams.put("flag", "1");
+		setParams.put("is_deleted", "0");
+		setParams.put("create_time", System.currentTimeMillis());
 		friendDao.saveBySQL(setParams, "friend");
 			
 		//step4 向友盟发送推送信息
-		Map<String, Object> map = new HashMap();
-		map.put("toId", userId);
+		Map<String, String> map = new HashMap();
+		map.put("toId", userId+"");
 		try {
 			pushService.sendIOSCustomizedcast(fromId+"", "您有新的好友请求", map);
 		} catch (Exception e) {
@@ -172,5 +190,27 @@ public class FriendController {
 		
 		List<Long> userIdBatch = (List<Long>)JSONArray.toCollection(jobj.getJSONArray("userIdBatch"), String.class);
 		return friendService.addFriendBatch(jobj.getLong("userIdA"), userIdBatch);
+	}
+	
+	@RequestMapping(value="remark.json", method=RequestMethod.POST)
+	public @ResponseBody Object remark(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","fuserId"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token","remark"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+
+		//step1 查找朋友
+		Long userId = jobj.getLong("userId");
+		Long userFid = jobj.getLong("fuserId");
+		Friend friend = friendDao.findByTwoId(userId, userFid);
+		if(null == friend || friend.getIsDeleted() || !"1".equals(friend.getFlag())) Result.fail(ErrorCode.NOT_FRIEND);
+		
+		HashMap setParams = new HashMap();
+		setParams.put("remark", jobj.getString("remark"));
+		HashMap whereParams = new HashMap();
+		whereParams.put("user_fid", userFid);
+		int exeResult = friendDao.updateByShard(setParams, "friend", "user_id", userId, whereParams);
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 }

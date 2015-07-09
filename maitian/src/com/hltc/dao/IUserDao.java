@@ -41,4 +41,12 @@ public interface IUserDao extends GenericDao<User>{
 	 * @return
 	 */
 	public List<User> findByIds(List<Long> uids);
+	
+	/**
+	 * 搜索新的好友
+	 * @param keyword 
+	 * @param fids  朋友的userId
+	 * @return
+	 */
+	public List<User> searchNewFriend(String keyword, List<Long> fids);
 }

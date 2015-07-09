@@ -23,6 +23,8 @@ public interface GenericDao<T>{
 	void delete(T entity);
 	//通过ID查询相应的对象
 	T findById(Serializable id);
+	//通过ID集合查询相应的对象集合
+	List<T> findByIds(String tableName, String idColumn, List<Long> ids);
 	//获取数据库中所有对象(一条记录就是一个对象)
 	List<T> getAll();
 	//利用分页的方法获取某一页面的对象
@@ -60,4 +62,16 @@ public interface GenericDao<T>{
 	 * @return 返回操作影响的记录性，若null，则表示没有查询出现异常
 	 */
 	List<T> findByShard(String tableName, String shardKey, Object shardValue, Map<String,Object> whereParams);
+	
+	/**
+	 * 通过SQL查找一条分表记录，其中包含拆分键
+	 * @param tableName
+	 * @param shardKey
+	 * @param shardValue
+	 * @param whereParams
+	 * @param start 记录起始条数
+	 * @param length 要获取的记录条数
+	 * @return 返回操作影响的记录性，若null，则表示没有查询出现异常
+	 */
+	List<T> findByShard(String tableName, String shardKey, Object shardValue, Map<String,Object> whereParams, int start, int length);
 }

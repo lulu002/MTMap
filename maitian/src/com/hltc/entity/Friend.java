@@ -14,6 +14,10 @@ public class Friend implements java.io.Serializable {
 	private Boolean isStar;
 	private String remark;
 	private String flag;
+	private Boolean isDeleted;
+	private Boolean isMeAdd;
+	private String text;
+	private Long createTime;
 
 	// Constructors
 
@@ -23,12 +27,17 @@ public class Friend implements java.io.Serializable {
 
 	/** full constructor */
 	public Friend(Long userId, Long userFid, Boolean isStar, String remark,
-			String flag) {
+			String flag, Boolean isDeleted, Boolean isMeAdd, String text,
+			Long createTime) {
 		this.userId = userId;
 		this.userFid = userFid;
 		this.isStar = isStar;
 		this.remark = remark;
 		this.flag = flag;
+		this.isDeleted = isDeleted;
+		this.isMeAdd = isMeAdd;
+		this.text = text;
+		this.createTime = createTime;
 	}
 
 	// Property accessors
@@ -79,6 +88,38 @@ public class Friend implements java.io.Serializable {
 
 	public void setFlag(String flag) {
 		this.flag = flag;
+	}
+
+	public Boolean getIsDeleted() {
+		return this.isDeleted;
+	}
+
+	public void setIsDeleted(Boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
+
+	public Boolean getIsMeAdd() {
+		return this.isMeAdd;
+	}
+
+	public void setIsMeAdd(Boolean isMeAdd) {
+		this.isMeAdd = isMeAdd;
+	}
+
+	public String getText() {
+		return this.text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+
+	public Long getCreateTime() {
+		return this.createTime;
+	}
+
+	public void setCreateTime(Long createTime) {
+		this.createTime = createTime;
 	}
 
 }

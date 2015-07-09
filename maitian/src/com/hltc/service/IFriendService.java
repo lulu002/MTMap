@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.hltc.entity.Friend;
 import com.hltc.entity.Token;
 import com.hltc.entity.User;
 
@@ -30,4 +31,12 @@ public interface IFriendService {
 	 * @return
 	 */
 	public HashMap addFriendBatch(Long userIdA, List<Long> userIdBatch);
+	
+	
+	/**
+	 * 获取正在添加（已经发送过请求未接受，或者未接受别人请求）
+	 * @param userId
+	 * @return
+	 */
+	public List<HashMap> getAddingFriends(Long userId);
 }

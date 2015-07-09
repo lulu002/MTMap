@@ -3,6 +3,7 @@
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -149,6 +150,34 @@ public abstract class GenericHibernateDao<T>  implements GenericDao<T>{
 		}
 	}
 	
+	//通过id集合查找实体对象集合
+	public List<T> findByIds(String tableName, String idColumn, List<Long> ids){
+		List<T> list = new ArrayList<T>();
+		if(null == ids || ids.size() == 0) return list;
+		
+		Session session = null;
+		StringBuilder sql = new StringBuilder();
+		int size = ids.size();
+		for(int i = 0 ; i < size; i++){
+			sql.append("select * from " + tableName + " where " + idColumn + " = "  + ids.get(i));
+			if(i < size - 1){
+				sql.append(" union all ");
+			}
+		}
+
+		try{
+			session = getSession();
+			list = session.createSQLQuery(sql.toString()).addEntity(clazz).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}finally{
+			session.close();
+		}
+		
+		return list;
+	}
+	
 	//删除实体对象
 	public void delete(T entity) {
 		Session session = getSession();
@@ -237,6 +266,7 @@ public abstract class GenericHibernateDao<T>  implements GenericDao<T>{
 			session.getTransaction().commit();
 		}catch(Exception e){
 			e.printStackTrace();
+			session.getTransaction().rollback();
 			return -1;
 		}finally{
 			session.close();
@@ -326,6 +356,46 @@ public abstract class GenericHibernateDao<T>  implements GenericDao<T>{
 		}
 		return result; 
 	}
+	
+	public List<T> findByShard(String tableName, String shardKey, Object shardValue, Map<String,Object> whereParams, int start, int length){
+		List<T> result = null;
+		Set<String> whereKeys = null;
+		Collection<Object> whereValues = null;
+		Session session = null;
+		StringBuilder sql = new StringBuilder("select * from `" + tableName+"`");
+		sql.append(" where " + shardKey + "=?");
+		
+		if(null != whereParams){
+			whereKeys = whereParams.keySet();
+			whereValues = whereParams.values();
+		}
+		
+		if(null != whereKeys){
+			for(String key : whereKeys){
+				sql.append(" and " + key + "=?");
+			}
+		}
+		
+		try{
+			session = getSession();
+			SQLQuery query = session.createSQLQuery(sql.toString());
+			query.setParameter(0, shardValue);
+			if(null != whereValues){
+				int i = 1;
+				for(Object value : whereValues){
+					query.setParameter(i++, value);
+				}
+			}
+			result = (List<T>)query.addEntity(clazz).list();
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}finally{
+			session.close();
+		}
+		return result; 
+	}
+	
 	//获取一个Session实例
 	public Session getSession(){
 		return HibernateUtil.openSession();

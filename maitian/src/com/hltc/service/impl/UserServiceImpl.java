@@ -1,6 +1,7 @@
 package com.hltc.service.impl;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,10 +17,12 @@ import com.cloopen.rest.sdk.CCPRestSDK;
 import com.hltc.common.ErrorCode;
 import com.hltc.common.GlobalConstant;
 import com.hltc.common.Result;
+import com.hltc.dao.IFriendDao;
 import com.hltc.dao.IPwdHashDao;
 import com.hltc.dao.ITokenDao;
 import com.hltc.dao.IUserDao;
 import com.hltc.dao.IVerifyCodeDao;
+import com.hltc.entity.Friend;
 import com.hltc.entity.PwdHash;
 import com.hltc.entity.Token;
 import com.hltc.entity.User;
@@ -39,6 +42,9 @@ public class UserServiceImpl implements IUserService{
 	private ITokenDao tokenDao;
 	@Autowired
 	private IPwdHashDao pwdHashDao;
+	@Autowired
+	private IFriendDao friendDao;
+	
 	private CCPRestSDK restAPI = new CCPRestSDK();
 	
 	public UserServiceImpl() {
@@ -342,5 +348,37 @@ public class UserServiceImpl implements IUserService{
 		set.put("verify_code", "");
 		int exeResult = verifyCodeDao.updateByShard(set, "verify_code", "user_id", userId,null);
 		return exeResult !=1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
+	}
+
+	@Override
+	public List getNewFriendByPhones(Long userId, Collection phones) {
+		List<User> rsltUsers = null;
+		List<User> users = userDao.findByPhones(phones);
+		if(null == users) return null;
+		
+		List<Long> uid = new ArrayList<Long>();
+		for(User u : users){
+			uid.add(u.getUserId());
+		}
+		
+		Long[] uids = new Long[uid.size()];
+		uid.toArray(uids);
+		List<Friend> friends = friendDao.findAllByUserIds(userId, uids);
+		
+		if(null == friends) return users; 
+		
+		rsltUsers = new ArrayList<User>();
+		for(User u : users){
+			Boolean isExist = false;
+			for(Friend f : friends){
+				if(u.getUserId().equals(f.getUserFid())){
+					isExist = true;
+					break;
+				}
+			}
+			
+			if(!isExist) rsltUsers.add(u);
+		}
+		return rsltUsers;
 	}
 }

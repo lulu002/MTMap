@@ -9,7 +9,7 @@ import com.hltc.entity.Grain;
 public interface IGrainDao extends GenericDao<Grain>{
 	/**
 	 * 查找某个用户的朋友发布的麦粒
-	 * @param userId   用户ID
+	 * @param uids   用户ID集合
 	 * @param mtcate_id 选择的类型
 	 * @param cityCode 城市编码
 	 * @param lon 经度
@@ -17,7 +17,7 @@ public interface IGrainDao extends GenericDao<Grain>{
 	 * @param radius 查询半径
 	 * @return
 	 */
-	public List findFriendsGrain(Long userId, String mtcate_id, String cityCode, Double lon, Double lat, Double radius);
+	public List findFriendsGrain(List<Long> uids, String mtcate_id, String cityCode, Double lon, Double lat, Double radius);
 	
 	/**
 	 * 通过查询条件查询麦粒
@@ -46,5 +46,13 @@ public interface IGrainDao extends GenericDao<Grain>{
 	 * @return
 	 */
 	public List<Grain> getUrecommendGrains(Long userId);
+	
+	/**
+	 * 获取某个用户某个类别的总数
+	 * @param userId 用户id
+	 * @param cateExpression 类目的表达式，例如 %00, 01%, 0000等，使用like查询
+	 * @return
+	 */
+	public Integer getCountByCate(Long userId, String cateExpression);
 	
 }

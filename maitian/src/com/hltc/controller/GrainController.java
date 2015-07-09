@@ -2,6 +2,7 @@ package com.hltc.controller;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +37,16 @@ import com.hltc.common.ErrorCode;
 import com.hltc.common.Pager;
 import com.hltc.common.Result;
 import com.hltc.dao.ICommentDao;
+import com.hltc.dao.IFriendDao;
 import com.hltc.dao.IGrainDao;
 import com.hltc.dao.IRecommendDao;
+import com.hltc.dao.ISiteDao;
 import com.hltc.dao.ITokenDao;
 import com.hltc.entity.Comment;
+import com.hltc.entity.Friend;
 import com.hltc.entity.Grain;
 import com.hltc.entity.Recommend;
+import com.hltc.entity.Site;
 import com.hltc.entity.Token;
 import com.hltc.entity.Vrecommend;
 import com.hltc.service.IGrainService;
@@ -71,6 +76,10 @@ public class GrainController {
 	private ITokenDao tokenDao;
 	@Autowired
 	private IRecommendDao recommendDao;
+	@Autowired
+	private IFriendDao friendDao;
+	@Autowired
+	private ISiteDao siteDao;
 	
 	@RequestMapping(value="/publish_batch.json/{minLine}/{maxLine}/{cityCode}", method = RequestMethod.POST)
 	public @ResponseBody Object publishByFile(HttpServletRequest request, @PathVariable Integer minLine, @PathVariable Integer maxLine, @PathVariable String cityCode){
@@ -234,11 +243,11 @@ public class GrainController {
 	@RequestMapping(value="/home_query.json", method=RequestMethod.POST)
 	public @ResponseBody Object homeQuery(@RequestBody JSONObject jobj){
 		//step0 参数检验
-		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
+		Map result = parametersValidate(jobj, new String[]{"userId"}, true, new Class[]{Integer.class, Long.class});
 		if(null == result.get(Result.SUCCESS)) return result;
-		result = parametersValidate(jobj, new String[]{"token","mcateId","cityCode","lon","lat"}, true, String.class);
+		result = parametersValidate(jobj, new String[]{"token","cityCode","lon","lat"}, true, String.class);
 		if(null == result.get(Result.SUCCESS)) return result;
-		result = parametersValidate(jobj, new String[]{"radius"}, false, String.class);
+		result = parametersValidate(jobj, new String[]{"radius","mcateId"}, false, String.class);
 		if(null == result.get(Result.SUCCESS)) return result;
 		
 		//step1 登录验证
@@ -246,7 +255,7 @@ public class GrainController {
 		result = userService.loginByToken(userId, jobj.getString("token"));
 		if(null == result.get(Result.SUCCESS)) return result;
 		
-		//step2 查询麦粒
+		
 		Double lon = null, lat = null, radius = null;
 		try {
 			lon = Double.valueOf(jobj.getString("lon"));
@@ -257,9 +266,8 @@ public class GrainController {
 			e.printStackTrace();
 			return Result.fail(ErrorCode.PARAMS_ERROR, "parameters eorr: lon,lat and radius should be double string");
 		}
-	
-		List<Grain> grains = grainDao.findFriendsGrain(userId, jobj.getString("mcateId"), jobj.getString("cityCode"), lon, lat, radius);
-		return Result.success(grains);
+		
+		return Result.success(grainService.getHomeQuery(userId, (String)jobj.get("mcateId"), jobj.getString("cityCode"), lon, lat, radius));
 	}
 	
 	/**
@@ -280,7 +288,8 @@ public class GrainController {
 		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step2 点赞表创建或者删除记录
-		return grainService.praise(jobj.getLong("gid"), userId);
+		result =  grainService.praise(jobj.getLong("gid"), userId);
+		return result;
 	}
 	
 	/**
@@ -416,7 +425,9 @@ public class GrainController {
 		try {
 			result =  grainService.getGrainDetail(jobj.getLong("gid"), userId);
 		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return Result.fail(ErrorCode.DB_ERROR);
 		}
 		return result;
 	}
@@ -568,5 +579,4 @@ public class GrainController {
 		
 		return Result.success();	
 	}
-	
 }

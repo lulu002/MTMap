@@ -48,12 +48,23 @@ public class ErrorCode {
 	//请求失败
 	public static final String REQUEST_FAIL = "10011";
 	
+	//该朋友已经添加过
+	public static final String FRIEND_EXIST = "40001";
+	//不是好友
+	public static final String NOT_FRIEND = "40002";
+	
+	//Site不存在
+	public static final String SITE_NOT_EXIST = "50001";
+	
 	//参数错误
 	public static final String PARAMS_ERROR = "e00001";
 	//数据库错误
 	public static final String DB_ERROR = "e00002";
 	//数据库记录重复，不唯一
 	public static final String ITEM_REPEAT = "e00003";
+	
+	//获取OSS federation token失败
+	public static final String OSS_FED_TOKEN_FAILED = "e10001";
 	
 	public static final HashMap<Object, Object> errorMessage = new HashMap<Object, Object>();
 	
@@ -81,8 +92,14 @@ public class ErrorCode {
 		
 		errorMessage.put(VISITOR_COUNT_LIMIT_ERROR, "游客数量超出限制");
 		
+		errorMessage.put(FRIEND_EXIST, "该好友已经添加过");
+		errorMessage.put(NOT_FRIEND, "对方不是您的好友");
+		
+		errorMessage.put(SITE_NOT_EXIST, "Site不存在");
+		
 		errorMessage.put(PARAMS_ERROR, "参数错误");
 		errorMessage.put(DB_ERROR, "数据库操作失败");
 		errorMessage.put(ITEM_REPEAT, "数据库记录重复，不唯一");
+		errorMessage.put(OSS_FED_TOKEN_FAILED, "获取OSS federation token失败");
 	}
 }

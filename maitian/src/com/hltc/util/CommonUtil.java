@@ -25,6 +25,16 @@ public class CommonUtil {
         return list.toArray(new Long[0]);
 	}
 	
+	public static List<String> getDistinct(List<String> strs){
+		List<String> result = new ArrayList<String>();
+		for(String str : strs){
+			if(!result.contains(str)){
+				result.add(str);
+			}
+		}
+		return result;
+	}
+	
 	/** 
 	 * ip地址转成整数. 
 	 * @param ip 
@@ -56,7 +66,6 @@ public class CommonUtil {
 	
 	 /** 
      * 获取请求主机IP地址,如果通过代理进来，则透过防火墙获取真实IP地址; 
-     *  
      * @param request 
      * @return 
      * @throws IOException 

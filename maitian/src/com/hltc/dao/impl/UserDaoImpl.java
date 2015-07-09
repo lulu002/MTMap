@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
@@ -43,6 +44,7 @@ public class UserDaoImpl extends GenericHibernateDao<User> implements IUserDao{
 
 	@Override
 	public List<User> findByPhones(Collection phones) {
+		if(null == phones || phones.size() == 0) return null;
 		Session session = null;
 		List<User> users = null;
 		try{
@@ -67,8 +69,9 @@ public class UserDaoImpl extends GenericHibernateDao<User> implements IUserDao{
 
 	@Override
 	public List<User> findByIds(List<Long> ids) {
-		if(null == ids || ids.size() == 0) return null;
-		List<User> users = null;
+		List<User> users = new ArrayList<User>();
+		if(null == ids || ids.size() == 0) return users;
+		
 		Session session = null;
 		StringBuilder sql = new StringBuilder("select * from `user` where user_id in (");
 		for(Long id : ids){
@@ -87,6 +90,33 @@ public class UserDaoImpl extends GenericHibernateDao<User> implements IUserDao{
 			session.close();
 		}
 		return users;
+	}
+
+	@Override
+	public List<User> searchNewFriend(String keyword, List<Long> fids) {
+		List<User> result = new ArrayList<User>();
+		Session session = null;
+		StringBuilder sql = new StringBuilder("select * from `user` as u ");
+		sql.append("where (u.phone like :keyword or u.nick_name like :keyword) ");
+		if(null != fids && fids.size() > 0 ){
+			sql.append("AND u.user_id not in(:fids)");
+		}
+		try{
+			session = getSession();
+			Query query = session.createSQLQuery(sql.toString()).addEntity(User.class);
+			query.setParameter("keyword", "%"+keyword+"%");
+			if(null != fids && fids.size() > 0){
+				query.setParameterList("fids", fids);
+			}
+			result = query.list();
+			System.out.println(query.getQueryString());
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}finally{
+			session.close();
+		}
+		return result;
 	}
 }
 

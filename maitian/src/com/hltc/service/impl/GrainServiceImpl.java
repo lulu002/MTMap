@@ -3,6 +3,7 @@ package com.hltc.service.impl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.sf.ezmorph.bean.MorphDynaBean;
 import net.sf.json.JSONArray;
@@ -35,6 +36,7 @@ import com.hltc.entity.User;
 import com.hltc.entity.UserPhotoAlbum;
 import com.hltc.entity.VerifyCode;
 import com.hltc.service.IGrainService;
+import com.hltc.service.IPushService;
 import com.hltc.service.IUserService;
 import com.hltc.util.BeanUtil;
 import com.hltc.util.CommonUtil;
@@ -61,6 +63,8 @@ public class GrainServiceImpl implements IGrainService{
 	private IUserDao userDao;
 	@Autowired
 	private IFriendDao friendDao;
+	@Autowired
+	private IPushService pushService;
 	
 	@Override
 	public String generateGrainId(String cityCode) {
@@ -125,20 +129,18 @@ public class GrainServiceImpl implements IGrainService{
 		grain.setText(jobj.getString("text"));
 		grain.setUserId(userId);
 		grain.setCreateTime(time);
+		grain.setCityCode(cityCode);
 		grain = grainDao.saveOrUpdateWithBack(grain);
 		
 		//step3 创建相册	
 		JSONArray array = (JSONArray)jobj.get("images");
 		
 		if(null != array){
-			List images = JSONArray.toList(array);
 			List<UserPhotoAlbum> list = new ArrayList<UserPhotoAlbum>();
-			for(int i = 0; i < images.size(); i++){
-				MorphDynaBean image = (MorphDynaBean) images.get(i);
+			for(Object image : array){
 				UserPhotoAlbum userPhotoAlbum = new UserPhotoAlbum();
 				userPhotoAlbum.setGid(grain.getGid());
-				userPhotoAlbum.setPhoto((String)image.get("large"));
-				userPhotoAlbum.setPhotoSmall((String)image.get("small"));
+				userPhotoAlbum.setPhoto((String)image);
 				userPhotoAlbum.setCreateTime(time);
 				userPhotoAlbum.setUserId(userId);
 				list.add(userPhotoAlbum);
@@ -153,6 +155,8 @@ public class GrainServiceImpl implements IGrainService{
 	public HashMap praise(Long gid, Long userId) {
 		Praise praise = praiseDao.findByGidAndUserId(gid, userId);
 		int exeResult = 0;
+		Grain grain = grainDao.findById(gid);
+		
 		if(null == praise){
 			HashMap setParams = new HashMap();
 			
@@ -168,6 +172,19 @@ public class GrainServiceImpl implements IGrainService{
 			whereParams.put("praise_id", praise.getPraiseId());
 			exeResult = praiseDao.updateByShard(setParams, "praise", "gid", praise.getGid(), whereParams);
 		}
+		
+		if(exeResult != -1 && (null == praise || praise.getIsDeleted())){
+			Map<String, String> map = new HashMap<String,String>();
+			map.put("pUid", userId+"");   //点赞者的id
+			map.put("grainId", gid+"");    //麦粒的id
+			try {
+				pushService.sendAndroidCustomizedcast(grain.getUserId()+"", "提示", map);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 
@@ -216,8 +233,11 @@ public class GrainServiceImpl implements IGrainService{
 	@Override
 	public HashMap createComment(JSONObject jobj) {
 		Comment comment = new Comment();
-		Long userId = jobj.getLong("userId");
+		Long userId = jobj.getLong("userId"); //评论人
 		Long gid = jobj.getLong("gid");
+		Grain grain = grainDao.findById(gid);
+		if(null == grain) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		
 		comment.setContent(jobj.getString("text"));
 		comment.setGid(gid);
 		comment.setCreateTime(System.currentTimeMillis());
@@ -240,9 +260,17 @@ public class GrainServiceImpl implements IGrainService{
 			comment.setTocid(tocid);
 		}
 		comment = commentDao.saveOrUpdateWithBack(comment);
+		if(null == comment) return Result.fail(ErrorCode.COMMENT_FAILED);
 		
-		HashMap map = new HashMap();
-		map.put("cid", comment.getCid());
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("cUid", userId+""); //评论人 
+		map.put("commentId", comment.getCid()+"");
+		map.put("grainId", gid+"");
+		try {
+			pushService.sendAndroidCustomizedcast(grain.getUserId()+"", "提示", map);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return Result.success(map);
 	}
 
@@ -250,27 +278,34 @@ public class GrainServiceImpl implements IGrainService{
 	@Override
 	public HashMap getGrainDetail(Long gid, Long userId)  throws Exception{
 		HashMap result = new HashMap();
-		try{
-		
 		//step1 : find grain
 		Grain grain = grainDao.findById(gid);
-		if(null == grain){
-			return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		if(null == grain || grain.getIsDeleted()) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		
+		Friend friend = null;
+		Boolean isSelfView =grain.getUserId().equals(userId);   //是否是麦粒发布者自己查看自己的麦粒 
+		if(!isSelfView){  //不是查看自己的麦粒, 那只能查看app推荐的麦粒和朋友推荐的麦粒
+			friend = friendDao.findByTwoId(userId, grain.getUserId());
+			if(null == friend || grain.getRecommend() == 0) return Result.fail(ErrorCode.NOT_FRIEND);
 		}
+		
+		result.put("grainId", grain.getGid());
 		result.put("text", grain.getText());
 		result.put("createTime", grain.getCreateTime());
 		//step2 : find publisher
-		User user = userDao.findById(grain.getUserId());
-		HashMap publisher = new HashMap();
-		if(null == user){
+		User publisher = userDao.findById(grain.getUserId());
+		HashMap publisherInfo = new HashMap();
+		if(null == publisher){
 			return Result.fail(ErrorCode.USER_NOT_EXIST);
 		}
-		publisher.put("userId", user.getUserId());
-		publisher.put("portrait", user.getPortrait());
-		publisher.put("portraitSmall", user.getPortraitSmall());
-		publisher.put("nickName", user.getNickName());
-		publisher.put("remark", "备注");
-		result.put("publisher", publisher);
+		publisherInfo.put("userId", publisher.getUserId());
+		publisherInfo.put("portrait", publisher.getPortrait());
+		publisherInfo.put("nickName", publisher.getNickName());
+		if(null != friend){
+			publisherInfo.put("remark", friend.getRemark());
+		}
+		result.put("publisher", publisherInfo);
+		
 		//step3 : find site
 		Site site = siteDao.findById(grain.getSiteId());
 		HashMap siteInfo = new HashMap();
@@ -289,10 +324,7 @@ public class GrainServiceImpl implements IGrainService{
 		List images = new ArrayList();
 		if(null != upaList && upaList.size()>0){
 			for(UserPhotoAlbum upa : upaList){
-				HashMap image = new HashMap();
-				image.put("small", upa.getPhotoSmall());
-				image.put("large", upa.getPhoto());
-				images.add(image);
+				images.add(upa.getPhoto());
 			}
 			result.put("images",images);
 		}
@@ -306,27 +338,39 @@ public class GrainServiceImpl implements IGrainService{
 		
 		//step7: 将点赞和评论的用户筛选（只筛选自己的朋友）
 		List<Long> ids = new ArrayList<Long>();
+		Boolean isSelfPraise = false;   //查看者是否点赞
+		Boolean isSelfComment = false;  //查看者是否评论
 		for(Praise p : praiseList){
-			ids.add(p.getUserId());
+			Long pUid = p.getUserId();
+			ids.add(pUid);
+			if(pUid.equals(userId)){
+				isSelfPraise = true;
+			}
 		}
 		
 		for(Comment c : comList){
-			ids.add(c.getUserId());
+			Long cUid = c.getUserId();
+			ids.add(cUid);
+			if(cUid.equals(userId)){
+				isSelfComment = true;
+			}
 		}
+		
 		List<Friend> friends = friendDao.findByUserIds(userId, CommonUtil.getDistinct(ids));
 		List<Long> uid = new ArrayList<Long>();
+		if(null == friends) return Result.fail(ErrorCode.DB_ERROR);
 		for(Friend f : friends){
 			uid.add(f.getUserFid());
 		}
+		uid.add(userId);  //查看者的id
 		
 		//step8: 获取用户信息
 		List<User> users = userDao.findByIds(uid);
-		
+		if(null == users) return Result.fail(ErrorCode.DB_ERROR);
 		
 		//step9: 将用户信息 填入 praise 和 comment中
 		List<HashMap> praiseInfo = new ArrayList<HashMap>();
 		List<HashMap> comInfo = new ArrayList<HashMap>();
-		
 		for(User u : users){
 			Long tmpId = u.getUserId();
 			for(Friend f : friends){
@@ -349,11 +393,11 @@ public class GrainServiceImpl implements IGrainService{
 							data.put("tocid", c.getTocid());
 							data.put("userId", tmpId);
 							data.put("nickName", u.getNickName());
+							data.put("portrait", u.getPortrait());
 							data.put("remark", f.getRemark());
 							data.put("text", c.getContent());
 							data.put("createTime", c.getCreateTime());
 							comInfo.add(data);
-							break;
 						}
 					}
 					
@@ -362,13 +406,41 @@ public class GrainServiceImpl implements IGrainService{
 			}
 		}
 		
-		result.put("praise", praiseInfo);
-		result.put("comment", comInfo);
-		}catch(Exception e){
-			e.printStackTrace();
+		User viewUser = null;  //查看麦粒的UserInfo
+		for(User u : users){
+			if(u.getUserId().equals(userId)){
+				viewUser = u;
+				break;
+			}
+		}
+		if(isSelfPraise){  //查看者自己点赞
+			HashMap data = new HashMap();
+			data.put("userId", viewUser.getUserId());
+			data.put("nickName", viewUser.getNickName());
+			data.put("remark", "");
+			praiseInfo.add(data);
 		}
 		
-		return result;
+		if(isSelfComment){   //查看者自己评论
+			for(Comment c : comList){
+				if(c.getUserId().equals(userId)){
+					HashMap data = new HashMap();
+					data.put("cid", c.getCid());
+					data.put("tocid", c.getTocid());
+					data.put("userId", userId);
+					data.put("nickName", viewUser.getNickName());
+					data.put("portrait", viewUser.getPortrait());
+					data.put("remark", "");
+					data.put("text", c.getContent());
+					data.put("createTime", c.getCreateTime());
+					comInfo.add(data);
+				}
+			}
+		}
+		
+		result.put("praise", praiseInfo);
+		result.put("comment", comInfo);
+		return Result.success(result);
 	}
 
 	@Override
@@ -411,7 +483,7 @@ public class GrainServiceImpl implements IGrainService{
 			
 			for(User u : users){
 				if(u.getUserId().equals(uid)){
-					data.put("portraitSmall", u.getPortraitSmall());
+					data.put("portrait", u.getPortrait());
 					break;
 				}
 			}
@@ -436,4 +508,54 @@ public class GrainServiceImpl implements IGrainService{
 		return result;
 	}
 
+	@Override
+	public List getHomeQuery(Long userId, String mcateId, String cityCode, Double lon, Double lat, Double radius) {
+		List<HashMap> rstData = new ArrayList<HashMap>();
+		//step1 find friends
+		HashMap whereParams = new HashMap();
+		whereParams.put("is_deleted", false);
+		List<Friend> friends = friendDao.findByShard("friend", "user_id", userId, whereParams);
+		if(null == friends || friends.size() == 0) return rstData;
+
+		List<Long> uids = new ArrayList<Long>();
+		for(Friend f: friends){
+			uids.add(f.getUserFid());
+		}
+		//step2 find grains
+		List<Object[]> grains = grainDao.findFriendsGrain(uids, mcateId, cityCode, lon, lat, radius);
+		if(null == grains || grains.size() == 0) return rstData;
+		//step3 find site
+		List<String> sids = new ArrayList<String>();
+		for(Object[] o : grains){
+			String siteId = (String)o[4];
+			if(!sids.contains(siteId)){
+				sids.add(siteId);
+			}
+		}
+		List<Site> sites = siteDao.findByIds(sids);
+		if(null == sites || sites.size() == 0) return rstData;
+		
+		//step4 组合
+		for(Object[] o : grains){
+			HashMap data = new HashMap();
+			data.put("grainId", o[0]);
+			data.put("text", o[1]);
+			data.put("userId", o[2]);
+			data.put("userPortrait", o[3]);
+			data.put("nickName", o[5]);
+			data.put("cateId", o[6]);
+			for(Friend f : friends){
+				if(f.getUserFid().equals(Long.valueOf(String.valueOf(o[2])))){
+					data.put("remark", f.getRemark());
+				}
+			}
+			for(Site s : sites){
+				if(s.getSiteId().equalsIgnoreCase((String)o[4])){
+					data.put("site", s);
+				}
+			}
+			rstData.add(data);
+		}
+		return rstData;
+	}
 }

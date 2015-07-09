@@ -22,7 +22,7 @@ public class GlobalConstant {
 	//默认的用户封面图
 	public static final String DEFAULT_COVER_IMG = "http://maitian.com";
 	//默认的用户头像
-	public static final String DEFAULT_POTRAIT = "http://maitian.com";
+	public static final String DEFAULT_POTRAIT = "http://maitianditu.oss-cn-hangzhou.aliyuncs.com/app/default_portrait.png";
 	//默认的用户头像缩略图
 	public static final String DEFAULT_POTRAIT_SMALL = "http://maitian.com";
 	
@@ -34,6 +34,9 @@ public class GlobalConstant {
 	
 	public static final String ALIYUN_ACCESSKEY_ID = "wxGYeoOqFGIikopt";
 	public static final String ALIYUN_ACCESSKEY_SECRET = "eQyS38ArhJo0fIotIuLoiz0FCx0J4N";
+	public static final String ALIYUN_USER_ID = "1194627879869635";
+	public static final String ALIYUN_USER_NAME = "2337223420@qq.com";
+	public static final String OSS_BUCKET_NAME = "maitianditu";
 	
 	//容联云通讯
 	public static final String CLOOPEN_PRO_URL = "app.cloopen.com";  //(生产) Rest URL

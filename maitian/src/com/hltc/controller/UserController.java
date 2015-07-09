@@ -29,11 +29,13 @@ import com.hltc.common.ErrorCode;
 import com.hltc.common.GlobalConstant;
 import com.hltc.common.Result;
 import com.hltc.dao.IFeedbackDao;
+import com.hltc.dao.IFriendDao;
 import com.hltc.dao.ITokenDao;
 import com.hltc.dao.IUserDao;
 import com.hltc.dao.IVerifyCodeDao;
 import com.hltc.dao.IVersionDao;
 import com.hltc.entity.Feedback;
+import com.hltc.entity.Friend;
 import com.hltc.entity.Token;
 import com.hltc.entity.User;
 import com.hltc.entity.VerifyCode;
@@ -63,6 +65,8 @@ public class UserController {
 	private IFeedbackDao feedbackDao;
 	@Autowired
 	private IVersionDao versionDao;
+	@Autowired
+	private IFriendDao friendDao;
 	
 	/**
     * 用户登陆方法
@@ -136,7 +140,7 @@ public class UserController {
 	 * @param jobj  userId,token,phone
 	 * @return
 	 */
-	@RequestMapping(value="/settings/password/verify_code.json", method=RequestMethod.POST)
+	@RequestMapping(value="/delelte/password/verify_code.json", method=RequestMethod.POST)
 	public @ResponseBody Object sendVerifyCodeOnSettingPwd(@RequestBody JSONObject jobj){
 		//step0 参数验证
 		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
@@ -167,7 +171,7 @@ public class UserController {
 	 * @param jobj
 	 * @return
 	 */
-	@RequestMapping(value="/settings/password/verify.json", method = RequestMethod.POST)
+	@RequestMapping(value="/delelte/password/verify.json", method = RequestMethod.POST)
 	public @ResponseBody Object verifyOnSettingPwd(@RequestBody JSONObject jobj){
 		//step0 参数验证
 		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
@@ -187,7 +191,7 @@ public class UserController {
 	 * @param jobj userId,token,pwd
 	 * @return
 	 */
-	@RequestMapping(value="/settings/password/reset.json", method = RequestMethod.POST)
+	@RequestMapping(value="/delelte/password/reset.json", method = RequestMethod.POST)
 	public @ResponseBody Object resetPwdOnSettingPwd(@RequestBody JSONObject jobj){
 		//step0 参数验证
 		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
@@ -202,7 +206,7 @@ public class UserController {
 		return userService.resetPassword(userId, jobj.getString("pwd"));
 	}
 	
-	@RequestMapping(value="/settings/feedback.json", method = RequestMethod.POST)
+	@RequestMapping(value="/delelte/feedback.json", method = RequestMethod.POST)
 	public @ResponseBody Object feedback(@RequestBody JSONObject jobj){
 		//step0 参数验证
 		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
@@ -227,7 +231,7 @@ public class UserController {
 	 * 设置 -> 检测更新
 	 * @return
 	 */
-	@RequestMapping(value="/settings/latest_version.json", method = RequestMethod.GET)
+	@RequestMapping(value="/delelte/latest_version.json", method = RequestMethod.GET)
 	public @ResponseBody Object getLatestVersion(){
 		Version version = versionDao.findLatesVersion();
 		return null == version? Result.fail(ErrorCode.DB_ERROR) : Result.success(BeanUtil.beanToMap(version));
@@ -336,20 +340,18 @@ public class UserController {
 		if(null == result.get(Result.SUCCESS))	return result;
 		
 		//step1 登录验证
-		result = userService.loginByToken(jobj.getLong("userId"), jobj.getString("token"));
+		Long userId = jobj.getLong("userId");
+		result = userService.loginByToken(userId, jobj.getString("token"));
 		if( null == result.get(Result.SUCCESS)) return result;
 		
-		List<User> users = userDao.findByPhones((Collection) jobj.get("phoneNumbers"));
-		
-		if(null == users){
-			return Result.fail(ErrorCode.DB_ERROR);
-		}
-		
+		//step2 获取通讯录好友
+		List<User> users = userService.getNewFriendByPhones(userId, (Collection) jobj.get("phoneNumbers"));
+		if(null==users) users = new ArrayList();
 		return Result.success(users);
 	}
 	
 	
-	@RequestMapping(value="/settings/update_nickname.json",method=RequestMethod.POST)
+	@RequestMapping(value="/delelte/update_nickname.json",method=RequestMethod.POST)
 	public @ResponseBody Object updateNickName(@RequestBody JSONObject jobj){
 		//step0 参数验证
 		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});

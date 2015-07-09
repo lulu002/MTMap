@@ -52,7 +52,7 @@ public interface IGrainService {
 	/**
 	 * 通过userId和gid获取麦粒详情
 	 * @param gid
-	 * @param userId
+	 * @param userId   查看麦粒的用户的ID
 	 * @return
 	 * @throws Exception 
 	 */
@@ -65,5 +65,17 @@ public interface IGrainService {
 	 * @return
 	 */
 	public List<HashMap> getRecommendGrains(String type, Long id);
+	
+	/**
+	 * 首页查询麦粒
+	 * @param userId
+	 * @param mcateId
+	 * @param cityCode
+	 * @param lon
+	 * @param lat
+	 * @param radius
+	 * @return
+	 */
+	public List getHomeQuery(Long userId, String mcateId, String cityCode, Double lon, Double lat, Double radius);
 	
 }
