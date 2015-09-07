@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hltc.common.ErrorCode;
+import com.hltc.common.GlobalConstant;
 import com.hltc.common.Pager;
 import com.hltc.common.Result;
 import com.hltc.dao.ICommentDao;
@@ -42,12 +43,16 @@ import com.hltc.dao.IGrainDao;
 import com.hltc.dao.IRecommendDao;
 import com.hltc.dao.ISiteDao;
 import com.hltc.dao.ITokenDao;
+import com.hltc.dao.IUserDao;
+import com.hltc.dao.IUserPhotoAlbumDao;
 import com.hltc.entity.Comment;
 import com.hltc.entity.Friend;
 import com.hltc.entity.Grain;
 import com.hltc.entity.Recommend;
 import com.hltc.entity.Site;
 import com.hltc.entity.Token;
+import com.hltc.entity.User;
+import com.hltc.entity.UserPhotoAlbum;
 import com.hltc.entity.Vrecommend;
 import com.hltc.service.IGrainService;
 import com.hltc.service.IUserService;
@@ -80,6 +85,10 @@ public class GrainController {
 	private IFriendDao friendDao;
 	@Autowired
 	private ISiteDao siteDao;
+	@Autowired
+	private IUserDao userDao;
+	@Autowired
+	private IUserPhotoAlbumDao userPhotoAlbumDao;
 	
 	@RequestMapping(value="/publish_batch.json/{minLine}/{maxLine}/{cityCode}", method = RequestMethod.POST)
 	public @ResponseBody Object publishByFile(HttpServletRequest request, @PathVariable Integer minLine, @PathVariable Integer maxLine, @PathVariable String cityCode){
@@ -334,6 +343,117 @@ public class GrainController {
 		
 		//step2 创建收藏记录
 		return grainService.favor(jobj.getLong("gid"), userId);
+	}
+	
+	/**
+	 * 麦粒分享
+	 * @param jobj
+	 * @return
+	 */
+	@RequestMapping(value="/share.json", method=RequestMethod.POST)
+	public @ResponseBody Object setShare(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		Long gid = jobj.getLong("gid");
+		Grain grain = grainDao.findById(gid);
+		if(null == grain) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		if(!grain.getUserId().equals(jobj.getLong("userId"))) return Result.fail(ErrorCode.NO_PERMISSION);
+		if(!grain.getIsPublic()) return Result.fail(ErrorCode.PRIVATE_GRAIN_NOT_SHARE);
+		
+		HashMap setParams = new HashMap();
+		setParams.put("is_shared", 1);
+		int exeResult = grainDao.updateByShard(setParams, "grain", "gid", gid, null);
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
+	}
+	
+	/**
+	 * 获取分享的麦粒的详情
+	 * @param jobj
+	 * @return
+	 */
+	@RequestMapping(value="/shared_grain.json", method=RequestMethod.POST)
+	public @ResponseBody Object getShareGrain(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, "gid", true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		Long gid = jobj.getLong("gid");
+		//step1 获取麦粒
+		Grain grain = grainDao.findById(gid);
+		if(null == grain) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		
+		//该麦粒没有被分享 或者 已经被更改为私密的麦粒
+		if(!grain.getIsShared() || !grain.getIsPublic()) return Result.fail(ErrorCode.NO_PERMISSION);
+		
+		Long userId = grain.getUserId();
+		User user = userDao.findById(userId);
+		if(null == user) return Result.fail(ErrorCode.DB_ERROR);
+		
+		String siteId = grain.getSiteId();
+		Site site = siteDao.findById(siteId);
+		if(null == site) return Result.fail(ErrorCode.DB_ERROR);
+		
+		HashMap whereParams = new HashMap();
+		whereParams.put("gid", gid);
+		List<UserPhotoAlbum> album = userPhotoAlbumDao.findByShard("user_photo_album", "user_id", userId, whereParams);
+		if(null == album) return Result.fail(ErrorCode.DB_ERROR);
+		
+		//拼装返回信息
+		HashMap userInfo = new HashMap();
+		userInfo.put("portrait", user.getPortrait());
+		userInfo.put("nickName", user.getNickName());
+		
+		HashMap siteInfo = new HashMap();
+		siteInfo.put("name", site.getName());
+		siteInfo.put("address", site.getAddress());
+		siteInfo.put("lon", site.getLon());
+		siteInfo.put("lat", site.getLat());
+		
+		List<String> photos = new ArrayList<String>();
+		for(UserPhotoAlbum upa : album){
+			photos.add(upa.getPhoto());
+		}
+		
+		HashMap statistic = new HashMap();
+	   	statistic.put("chihe", grainDao.getCountByCate(userId, GlobalConstant.CAT_CHIHE, true));
+	   	statistic.put("wanle", grainDao.getCountByCate(userId, GlobalConstant.CAT_WANLE, true));
+	   	statistic.put("other", grainDao.getCountByCate(userId, GlobalConstant.CAT_OTHER, true));
+		
+		HashMap rsltData = new HashMap();
+		rsltData.put("user", userInfo);
+		rsltData.put("site", siteInfo);
+		rsltData.put("photos", photos);
+		rsltData.put("grainStatistics", statistic);
+		
+		return rsltData;
+	}
+	
+	/**
+	 * 设置麦粒是否公开
+	 * @param jobj
+	 * @return
+	 */
+	@RequestMapping(value="/public.json", method=RequestMethod.POST)
+	public @ResponseBody Object setPublic(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","gid"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		Long gid = jobj.getLong("gid");
+		Grain grain = grainDao.findById(gid);
+		if(null == grain) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		if(!grain.getUserId().equals(jobj.getLong("userId"))) return Result.fail(ErrorCode.NO_PERMISSION);
+		
+		HashMap setParams = new HashMap();
+		setParams.put("is_public", !grain.getIsPublic());
+		int exeResult = grainDao.updateByShard(setParams, "grain", "gid", jobj.getLong("gid"), null);
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 	
 	/**

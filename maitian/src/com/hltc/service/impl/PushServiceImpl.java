@@ -92,6 +92,7 @@ public class PushServiceImpl implements IPushService{
 		// TODO Set your alias_type here
 		customizedcast.setPredefinedKeyValue("alias_type", "TYPE_MTMAP");
 		customizedcast.setPredefinedKeyValue("ticker", "Android customizedcast ticker");
+		customizedcast.setPredefinedKeyValue("builder_id", 1);
 		customizedcast.setPredefinedKeyValue("title",  "中文的title");
 		customizedcast.setPredefinedKeyValue("text",   "Android customizedcast text");
 		customizedcast.setPredefinedKeyValue("after_open", "go_app");

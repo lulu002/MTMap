@@ -51,8 +51,9 @@ public interface IGrainDao extends GenericDao<Grain>{
 	 * 获取某个用户某个类别的总数
 	 * @param userId 用户id
 	 * @param cateExpression 类目的表达式，例如 %00, 01%, 0000等，使用like查询
+	 * @param isPublic  是否公开  true false null ，如果传入null, 则不考虑该条件
 	 * @return
 	 */
-	public Integer getCountByCate(Long userId, String cateExpression);
+	public Integer getCountByCate(Long userId, String cateExpression, Boolean isPublic);
 	
 }

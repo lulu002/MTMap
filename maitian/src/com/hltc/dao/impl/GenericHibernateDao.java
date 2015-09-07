@@ -157,13 +157,23 @@ public abstract class GenericHibernateDao<T>  implements GenericDao<T>{
 		
 		Session session = null;
 		StringBuilder sql = new StringBuilder();
-		int size = ids.size();
-		for(int i = 0 ; i < size; i++){
-			sql.append("select * from " + tableName + " where " + idColumn + " = "  + ids.get(i));
-			if(i < size - 1){
-				sql.append(" union all ");
-			}
+		
+		//方案1
+//		int size = ids.size();
+//		for(int i = 0 ; i < size; i++){
+//			sql.append("select * from " + tableName + " where " + idColumn + " = "  + ids.get(i));
+//			if(i < size - 1){
+//				sql.append(" union all ");
+//			}
+//		}
+		
+//     方案2		
+		sql.append("select * from " + tableName + " where " + idColumn + " in (");
+		for(Long id : ids){
+			sql.append(id+",");
 		}
+		sql.deleteCharAt(sql.length()-1);
+		sql.append(")");
 
 		try{
 			session = getSession();

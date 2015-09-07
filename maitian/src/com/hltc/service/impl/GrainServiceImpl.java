@@ -174,13 +174,17 @@ public class GrainServiceImpl implements IGrainService{
 		}
 		
 		if(exeResult != -1 && (null == praise || praise.getIsDeleted())){
+			praise = praiseDao.findByGidAndUserId(gid, userId);
+			if(null == praise) return Result.fail(ErrorCode.DB_ERROR);
+			
 			Map<String, String> map = new HashMap<String,String>();
-			map.put("pUid", userId+"");   //点赞者的id
-			map.put("grainId", gid+"");    //麦粒的id
+			map.put("praiseId", praise.getPraiseId()+"");   //点赞ID 
+			map.put("grainId", grain.getGid()+"");   //麦粒ID 
+			map.put("type", "praise");   //类型
+			
 			try {
 				pushService.sendAndroidCustomizedcast(grain.getUserId()+"", "提示", map);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -263,9 +267,9 @@ public class GrainServiceImpl implements IGrainService{
 		if(null == comment) return Result.fail(ErrorCode.COMMENT_FAILED);
 		
 		Map<String, String> map = new HashMap<String, String>();
-		map.put("cUid", userId+""); //评论人 
 		map.put("commentId", comment.getCid()+"");
-		map.put("grainId", gid+"");
+		map.put("grainId", grain.getGid()+"");  
+		map.put("type", "comment");
 		try {
 			pushService.sendAndroidCustomizedcast(grain.getUserId()+"", "提示", map);
 		} catch (Exception e) {
@@ -280,16 +284,24 @@ public class GrainServiceImpl implements IGrainService{
 		HashMap result = new HashMap();
 		//step1 : find grain
 		Grain grain = grainDao.findById(gid);
-		if(null == grain || grain.getIsDeleted()) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);
+		if(null == grain || grain.getIsDeleted()) return Result.fail(ErrorCode.GRAIN_NOT_EXIST);   //麦粒不存在
+		if(!grain.getIsPublic()) return Result.fail(ErrorCode.NO_PERMISSION);    // 麦粒为私密
 		
 		Friend friend = null;
 		Boolean isSelfView =grain.getUserId().equals(userId);   //是否是麦粒发布者自己查看自己的麦粒 
-		if(!isSelfView){  //不是查看自己的麦粒, 那只能查看app推荐的麦粒和朋友推荐的麦粒
+		if(!isSelfView){  //不是查看自己的麦粒, 那只能查看app推荐的麦粒或朋友公开的麦粒
 			friend = friendDao.findByTwoId(userId, grain.getUserId());
-			if(null == friend || grain.getRecommend() == 0) return Result.fail(ErrorCode.NOT_FRIEND);
+			if(null == friend && grain.getRecommend() == 0) return Result.fail(ErrorCode.NO_PERMISSION);   //不是朋友且非系统推荐   
+			
+			Favorite favor = favoriteDao.findByGidAndUserId(gid, userId);
+			if(null != favor && !favor.getIsDeleted()){
+				result.put("isFavored", 1);
+			}
+		}else{
+			result.put("isFavored", 0);
 		}
-		
-		result.put("grainId", grain.getGid());
+
+		result.put("grainId", gid);
 		result.put("text", grain.getText());
 		result.put("createTime", grain.getCreateTime());
 		//step2 : find publisher
@@ -484,6 +496,7 @@ public class GrainServiceImpl implements IGrainService{
 			for(User u : users){
 				if(u.getUserId().equals(uid)){
 					data.put("portrait", u.getPortrait());
+					data.put("nickName", u.getNickName());
 					break;
 				}
 			}
@@ -557,5 +570,83 @@ public class GrainServiceImpl implements IGrainService{
 			rstData.add(data);
 		}
 		return rstData;
+	}
+
+	@Override
+	public List<Grain> getGranisByUserId(Long userId, Boolean isPublic) {
+		HashMap whereParams = new HashMap();
+		whereParams.put("is_deleted", false);
+		if(null != isPublic){
+			whereParams.put("is_public", isPublic);
+		}
+		
+		return grainDao.findByShard("grain1", "user_id", userId, whereParams);
+	}
+	
+	public List<HashMap> getMaitianByUserId(Long userId, Boolean isPublic){
+		List<HashMap> rstData = new ArrayList<HashMap>();
+		
+		List<Grain> grains = getGranisByUserId(userId, isPublic);
+		if(null == grains) return null;
+		if(grains.size() == 0) return rstData;
+		
+		List<String> siteIds = new ArrayList<String>();
+		List<Long> grainIds = new ArrayList<Long>();
+		for(Grain grain : grains){
+			siteIds.add(grain.getSiteId());
+			grainIds.add(grain.getGid());
+		}
+		
+		List<Site> sites = siteDao.findByIds(CommonUtil.getDistinct(siteIds));
+		if(null == sites) return rstData;
+		
+		List<UserPhotoAlbum> photos = userPhotoAlbumDao.findByGrainIds(grainIds);
+		if(null == photos) return rstData;
+		
+		for(Grain grain : grains){
+			Long grainId = grain.getGid();
+			String siteId = grain.getSiteId();
+			HashMap data = new HashMap();
+			data.put("grainId", grainId);
+			data.put("cateId", grain.getMcateId());
+			data.put("text", grain.getText());
+			data.put("createTime", grain.getCreateTime());
+			data.put("isPublic", grain.getIsPublic());
+			for(Site site : sites){
+				if(site.getSiteId().equalsIgnoreCase(siteId)){
+					data.put("siteName", site.getName());
+					data.put("address", site.getAddress());
+					break;
+				}
+			}
+			
+			for(UserPhotoAlbum album : photos){
+				if(album.getGid().equals(grainId)){
+					data.put("image", album.getPhoto());
+					break;
+				}
+			}
+			rstData.add(data);
+		}
+		
+		return rstData;
+	}
+
+	@Override
+	public List<Long> getIgnoreGrainsByIds(List<Long> gids, Long userId) {
+		List<Long> rsltData = new ArrayList<Long>();
+		
+		if(null == gids || gids.size() == 0){
+			return rsltData;
+		}
+		
+		List<Neglect> list = neglectDao.findByGidsAndUserId(gids, userId);
+		if(null == list) return null;
+		
+		for(Neglect n : list){
+			rsltData.add(n.getGid());
+		}
+
+		return rsltData;
 	}
 }

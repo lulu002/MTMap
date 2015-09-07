@@ -35,8 +35,9 @@ public class UserPhotoAlbumDaoImpl extends GenericHibernateDao<UserPhotoAlbum> i
 
 	@Override
 	public List<UserPhotoAlbum> findByGrainIds(List<Long> ids) {
-		if(null == ids || ids.size() == 0) return null;
-		List<UserPhotoAlbum> images = null;
+		List<UserPhotoAlbum> images = new ArrayList<UserPhotoAlbum>();
+		if(null == ids || ids.size() == 0) return images;
+
 		Session session = null;
 		StringBuilder sql = new StringBuilder("select * from user_photo_album where gid in (");
 		for(Long id : ids){

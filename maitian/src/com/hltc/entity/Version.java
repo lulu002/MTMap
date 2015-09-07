@@ -9,9 +9,10 @@ public class Version implements java.io.Serializable {
 	// Fields
 
 	private Short vid;
-	private String version;
+	private String versionName;
 	private Long createTime;
 	private String log;
+	private Short versionCode;
 
 	// Constructors
 
@@ -20,10 +21,12 @@ public class Version implements java.io.Serializable {
 	}
 
 	/** full constructor */
-	public Version(String version, Long createTime, String log) {
-		this.version = version;
+	public Version(String versionName, Long createTime, String log,
+			Short versionCode) {
+		this.versionName = versionName;
 		this.createTime = createTime;
 		this.log = log;
+		this.versionCode = versionCode;
 	}
 
 	// Property accessors
@@ -36,12 +39,12 @@ public class Version implements java.io.Serializable {
 		this.vid = vid;
 	}
 
-	public String getVersion() {
-		return this.version;
+	public String getVersionName() {
+		return this.versionName;
 	}
 
-	public void setVersion(String version) {
-		this.version = version;
+	public void setVersionName(String versionName) {
+		this.versionName = versionName;
 	}
 
 	public Long getCreateTime() {
@@ -58,6 +61,14 @@ public class Version implements java.io.Serializable {
 
 	public void setLog(String log) {
 		this.log = log;
+	}
+
+	public Short getVersionCode() {
+		return this.versionCode;
+	}
+
+	public void setVersionCode(Short versionCode) {
+		this.versionCode = versionCode;
 	}
 
 }

@@ -3,6 +3,8 @@ package com.hltc.service;
 import java.util.HashMap;
 import java.util.List;
 
+import com.hltc.entity.Grain;
+
 import net.sf.json.JSONObject;
 
 /**
@@ -78,4 +80,27 @@ public interface IGrainService {
 	 */
 	public List getHomeQuery(Long userId, String mcateId, String cityCode, Double lon, Double lat, Double radius);
 	
+	/**
+	 * 查找userId的所有麦粒
+	 * @param userId
+	 * @param isPublic  若传入为null，则不筛选该条件
+	 * @return 若数据库查询错误，返回null
+	 */
+	public List<Grain> getGranisByUserId(Long userId, Boolean isPublic);
+	
+	/**
+	 * 查找userId的麦田
+	 * @param userId
+	 * @param isPublic
+	 * @return 若数据库查询错误，返回null
+	 */
+	public List<HashMap> getMaitianByUserId(Long userId, Boolean isPublic);
+	
+	/**
+	 * 根据传入的麦粒ID集合，获得忽略麦粒的ID集合
+	 * @param userId
+	 * @param gids
+	 * @return 若异常，则返回null,否则返回list结果集
+	 */
+	public List<Long> getIgnoreGrainsByIds(List<Long> gids, Long userId);
 }

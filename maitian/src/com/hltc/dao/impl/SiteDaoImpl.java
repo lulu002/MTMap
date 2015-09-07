@@ -17,8 +17,9 @@ public class SiteDaoImpl extends GenericHibernateDao<Site> implements ISiteDao{
 
 	@Override
 	public List<Site> findByIds(List<String> ids) {
-		if(null == ids || ids.size() == 0) return null;
-		List<Site> sites = null;
+		List<Site> sites = new ArrayList<Site>();
+		if(null == ids || ids.size() == 0) return sites;
+		
 		Session session = null;
 		StringBuilder sql = new StringBuilder("select * from site where site_id in (");
 		for(String id : ids){

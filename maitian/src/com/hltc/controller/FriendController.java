@@ -2,6 +2,7 @@ package com.hltc.controller;
 
 import static com.hltc.util.SecurityUtil.parametersValidate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,12 +19,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hltc.common.ErrorCode;
+import com.hltc.common.GlobalConstant;
 import com.hltc.common.Result;
 import com.hltc.dao.IFriendDao;
+import com.hltc.dao.IGrainDao;
 import com.hltc.dao.IUserDao;
 import com.hltc.entity.Friend;
 import com.hltc.entity.User;
 import com.hltc.service.IFriendService;
+import com.hltc.service.IGrainService;
 import com.hltc.service.IPushService;
 import com.hltc.service.IUserService;
 import com.hltc.util.UUIDUtil;
@@ -43,9 +47,13 @@ public class FriendController {
 	@Autowired
 	private IFriendService friendService;
 	@Autowired
+	private IGrainService grainService;
+	@Autowired
 	private IUserDao userDao;
 	@Autowired
 	private IFriendDao friendDao;
+	@Autowired
+	private IGrainDao grainDao;
 	
 	@RequestMapping(value="/add_friend_backyard.json", method=RequestMethod.POST)
 	public @ResponseBody Object addFriendOnBackYard(@RequestBody JSONObject jobj){
@@ -204,13 +212,127 @@ public class FriendController {
 		Long userId = jobj.getLong("userId");
 		Long userFid = jobj.getLong("fuserId");
 		Friend friend = friendDao.findByTwoId(userId, userFid);
-		if(null == friend || friend.getIsDeleted() || !"1".equals(friend.getFlag())) Result.fail(ErrorCode.NOT_FRIEND);
+		if(null == friend || friend.getIsDeleted() || !"1".equals(friend.getFlag())) return Result.fail(ErrorCode.NOT_FRIEND);
 		
 		HashMap setParams = new HashMap();
 		setParams.put("remark", jobj.getString("remark"));
 		HashMap whereParams = new HashMap();
 		whereParams.put("user_fid", userFid);
 		int exeResult = friendDao.updateByShard(setParams, "friend", "user_id", userId, whereParams);
+		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
+	}
+	
+	@RequestMapping(value="/personal/mainInfo.json", method=RequestMethod.POST)
+	public @ResponseBody Object getFriendPersonalInfo(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","fuserId"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		//step1 查找朋友
+		Long userId = jobj.getLong("userId");
+		Long userFid = jobj.getLong("fuserId");
+		Friend friend = friendDao.findByTwoId(userId, userFid);
+		if(null == friend || friend.getIsDeleted() || !"1".equals(friend.getFlag())) return Result.fail(ErrorCode.NOT_FRIEND);
+		
+		//step2 get UserInfo
+		User user = userDao.findById(userFid);
+		if(null == user) return Result.fail(ErrorCode.USER_NOT_EXIST);
+	   	
+		//step3 composite data
+		HashMap rstData = new HashMap();
+		
+		HashMap userInfo = new HashMap();
+	   	userInfo.put("userId", user.getUserId());
+	   	userInfo.put("portrait", user.getPortrait());
+	   	userInfo.put("nickName", user.getNickName());
+	   	userInfo.put("remark", friend.getRemark());
+	   	userInfo.put("signature", user.getSignature());
+	   	userInfo.put("coverImg", user.getCoverImg());
+		
+	   	HashMap statistic = new HashMap();
+	   	statistic.put("chihe", grainDao.getCountByCate(userFid, GlobalConstant.CAT_CHIHE, true));
+	   	statistic.put("wanle", grainDao.getCountByCate(userFid, GlobalConstant.CAT_WANLE, true));
+	   	statistic.put("other", grainDao.getCountByCate(userFid, GlobalConstant.CAT_OTHER, true));
+	   	
+	   	rstData.put("user", userInfo);
+	   	rstData.put("grainStatistics", statistic);
+		
+		return Result.success(rstData);
+	} 
+	
+	@RequestMapping(value="/personal/maitian.json", method=RequestMethod.POST)
+	public @ResponseBody Object getFriendMaitian(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","fuserId"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		List<HashMap> rstData = new ArrayList<HashMap>();
+		//step1 查找朋友
+		Long userId = jobj.getLong("userId");
+		Long userFid = jobj.getLong("fuserId");
+		Friend friend = friendDao.findByTwoId(userId, userFid);
+		Friend friend2 = friendDao.findByTwoId(userFid, userId);
+		if(null == friend || friend.getIsDeleted() || !"1".equals(friend.getFlag()))	return Result.fail(ErrorCode.NOT_FRIEND);
+		
+		if(null != friend2 && "2".equals(friend2.getFlag())){ //对方已经把你删除
+			return Result.success(rstData);  //返回空的麦粒集合
+		}
+		
+		//获取朋友的公开麦粒
+		List<HashMap> grains= grainService.getMaitianByUserId(userFid, true);   
+		if(null == grains) return Result.fail(ErrorCode.DB_ERROR);
+		
+		List<Long> gids = new ArrayList<Long>();
+		for(HashMap g : grains){
+			gids.add((Long)g.get("grainId"));
+		}
+		
+		//获取忽略的麦粒
+		List<Long> ignoreIds = grainService.getIgnoreGrainsByIds(gids, userId);
+		if(null == ignoreIds) return  Result.fail(ErrorCode.DB_ERROR);
+		
+		for(HashMap grain : grains){
+			Boolean isIgnore = false;
+			for(Long ignoreId : ignoreIds){
+				if(((Long)grain.get("grainId")).equals(ignoreId)){
+					isIgnore = true;
+					break;
+				}
+			}
+			
+			if(!isIgnore){
+				rstData.add(grain);
+			}
+		}		
+		
+		return Result.success(rstData);
+	}
+	
+	@RequestMapping(value="/delete.json", method=RequestMethod.POST)
+	public @ResponseBody Object delete(@RequestBody JSONObject jobj){
+		//step0 参数验证
+		Map result = parametersValidate(jobj, new String[]{"userId","fuserId"}, true, new Class[]{Integer.class, Long.class});
+		if(null == result.get(Result.SUCCESS))	return result;
+		result = parametersValidate(jobj, new String[]{"token"}, true, String.class);
+		if(null == result.get(Result.SUCCESS))	return result;
+		
+		//step1 查找朋友
+		Long userId = jobj.getLong("userId");
+		Long userFid = jobj.getLong("fuserId");
+		Friend friend = friendDao.findByTwoId(userId, jobj.getLong("fuserId"));
+		if(null == friend || friend.getIsDeleted() || !"1".equals(friend.getFlag()))	return Result.fail(ErrorCode.NOT_FRIEND);
+		
+		//step2 删除好友
+		HashMap setParams = new HashMap();
+		setParams.put("flag", "2");
+		HashMap whereParams = new HashMap();
+		whereParams.put("user_fid", userFid);
+		int exeResult = friendDao.updateByShard(setParams, "friend", "user_id", userId, whereParams);
+		
 		return exeResult == -1 ? Result.fail(ErrorCode.DB_ERROR) : Result.success();
 	}
 }

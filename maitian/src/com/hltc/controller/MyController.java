@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hltc.common.ErrorCode;
+import com.hltc.common.GlobalConstant;
 import com.hltc.common.Result;
 import com.hltc.dao.IFavoriteDao;
 import com.hltc.dao.IFeedbackDao;
@@ -37,6 +38,7 @@ import com.hltc.entity.User;
 import com.hltc.entity.UserPhotoAlbum;
 import com.hltc.entity.Version;
 import com.hltc.service.IFriendService;
+import com.hltc.service.IGrainService;
 import com.hltc.service.IPushService;
 import com.hltc.service.IUserService;
 import com.hltc.util.BeanUtil;
@@ -58,6 +60,8 @@ public class MyController {
 	private IPushService pushService;
 	@Autowired
 	private IFriendService friendService;
+	@Autowired 
+	private IGrainService grainService;
 	@Autowired
 	private IUserDao userDao;
 	@Autowired
@@ -220,14 +224,14 @@ public class MyController {
 		if(null == result.get(Result.SUCCESS))	return result;
 		
 		HashMap data = new HashMap();
-		data.put("chihe", grainDao.getCountByCate(userId, "01%"));
-		data.put("wanle", grainDao.getCountByCate(userId, "02%"));
-		data.put("other", grainDao.getCountByCate(userId, "99%"));
+		data.put("chihe", grainDao.getCountByCate(userId, GlobalConstant.CAT_CHIHE, null));
+		data.put("wanle", grainDao.getCountByCate(userId, GlobalConstant.CAT_WANLE, null));
+		data.put("other", grainDao.getCountByCate(userId, GlobalConstant.CAT_OTHER, null));
 		return Result.success(data);
 	}
 	
 	@RequestMapping(value="/maitian.json", method=RequestMethod.POST)
-	public @ResponseBody Object getMyGrains(@RequestBody JSONObject jobj){
+	public @ResponseBody Object getMyMaitian(@RequestBody JSONObject jobj){
 		//step0 参数验证
 		Map result = parametersValidate(jobj, "userId", true, new Class[]{Integer.class, Long.class});
 		if(null == result.get(Result.SUCCESS))	return result;
@@ -239,50 +243,8 @@ public class MyController {
 		result = userService.loginByToken(userId, jobj.getString("token"));
 		if(null == result.get(Result.SUCCESS))	return result;
 		
-		HashMap whereParams = new HashMap();
-		whereParams.put("is_deleted", false);
-		List<Grain> grains = grainDao.findByShard("grain1", "user_id", userId, whereParams);
-		
-		if(null == grains) return Result.fail(ErrorCode.DB_ERROR);
-		
-		List<HashMap> rsltData = new ArrayList<HashMap>();
-		if(grains.size() == 0) return Result.success(rsltData);
-		
-		List<String> siteIds = new ArrayList<String>();
-		List<Long> grainIds = new ArrayList<Long>();
-		for(Grain grain : grains){
-			siteIds.add(grain.getSiteId());
-			grainIds.add(grain.getGid());
-		}
-		
-		List<Site> sites = siteDao.findByIds(CommonUtil.getDistinct(siteIds));
-		List<UserPhotoAlbum> photos = userPhotoAlbumDao.findByGrainIds(grainIds);
-		
-		for(Grain grain : grains){
-			Long grainId = grain.getGid();
-			String siteId = grain.getSiteId();
-			HashMap data = new HashMap();
-			data.put("grainId", grainId);
-			data.put("text", grain.getText());
-			data.put("createTime", grain.getCreateTime());
-			for(Site site : sites){
-				if(site.getSiteId().equalsIgnoreCase(siteId)){
-					data.put("siteName", site.getName());
-					data.put("address", site.getAddress());
-					break;
-				}
-			}
-			
-			for(UserPhotoAlbum album : photos){
-				if(album.getGid().equals(grainId)){
-					data.put("image", album.getPhoto());
-					break;
-				}
-			}
-			rsltData.add(data);
-		}
-		
-		return Result.success(rsltData);
+		List<HashMap> rstData = grainService.getMaitianByUserId(userId, null);
+		return null == rstData ? Result.fail(ErrorCode.DB_ERROR) : Result.success(rstData);
 	};
 	
 	@RequestMapping(value="/favourites.json", method = RequestMethod.POST)
@@ -304,14 +266,85 @@ public class MyController {
 		if(null == favors) return Result.fail(ErrorCode.DB_ERROR);
 		
 		List<Long> gids = new ArrayList<Long>();   //麦粒id集合
+		List<Long> uids = new ArrayList<Long>();   //麦粒发布者id集合
+		List<String> siteIds = new ArrayList<String>(); //site id集合
+		
 		for(Favorite favor : favors){
 			gids.add(favor.getGid());
 		}
+		// get grains
+		List<Grain> grains = grainDao.findByIds("grain1", "gid",gids);
+		if(null == grains) return Result.fail(ErrorCode.DB_ERROR);
 		
+		for(Grain grain : grains){
+			uids.add(grain.getUserId());
+			siteIds.add(grain.getSiteId());
+		}
 		
-		List<Long> uids = new ArrayList<Long>();   //麦粒发布者id集合
+		// get users
+		List<User> users = userDao.findByIds(uids);
+		if(null == users) return Result.fail(ErrorCode.DB_ERROR);
 		
-		return null;
+		// get friends
+		Long[] fuids = new Long[uids.size()];
+		List<Friend> friends = friendDao.findByUserIds(userId,(Long[])uids.toArray(new Long[uids.size()]));
+		if(null == friends) return Result.fail(ErrorCode.DB_ERROR);
+		
+		// get sites
+		List<Site> sites = siteDao.findByIds(siteIds);
+		if(null == sites) return Result.fail(ErrorCode.DB_ERROR);
+		
+		//  get photos
+		List<UserPhotoAlbum> photos = userPhotoAlbumDao.findByGrainIds(gids);
+		if(photos == null)  return Result.fail(ErrorCode.DB_ERROR);
+		
+		//composite data
+		List<HashMap> rsltData = new ArrayList<HashMap>();
+		for(Grain grain : grains){
+			HashMap data = new HashMap();
+			Long gid = grain.getGid();
+			Long uid = grain.getUserId();
+			String siteId = grain.getSiteId();
+			
+			data.put("grainId", gid);
+			data.put("text", grain.getText());
+			data.put("createTime", grain.getCreateTime());
+			data.put("lon", grain.getLon());
+			data.put("lat", grain.getLat());
+			data.put("cateId", grain.getMcateId());
+			
+			for( User u : users){
+				if(u.getUserId().equals(uid)){
+					data.put("nickName", u.getNickName());
+					for(Friend f : friends){
+						if(f.getUserFid().equals(uid)){
+							data.put("remark", f.getRemark());
+							break;
+						}
+					}
+					break;
+				}
+			}
+			
+			for(Site s : sites){
+				if(s.getSiteId().equalsIgnoreCase(siteId)){
+					data.put("siteName", s.getName());
+					data.put("address", s.getAddress());
+					break;
+				}
+			}
+			
+			for(UserPhotoAlbum photo : photos){
+				if(photo.getGid().equals(gid)){
+					data.put("image", photo.getPhoto());
+					break;
+				}
+			}
+			
+			rsltData.add(data);
+		}
+		
+		return Result.success(rsltData);
 	};
 	
 	@RequestMapping(value="/settings/update_nickname.json",method=RequestMethod.POST)

@@ -20,7 +20,7 @@ public class GlobalConstant {
 	public static final Integer TOKEN_VALID_TIME = 7;
 	
 	//默认的用户封面图
-	public static final String DEFAULT_COVER_IMG = "http://maitian.com";
+	public static final String DEFAULT_COVER_IMG = "http://maitianditu.oss-cn-hangzhou.aliyuncs.com/app/default_cover.png";
 	//默认的用户头像
 	public static final String DEFAULT_POTRAIT = "http://maitianditu.oss-cn-hangzhou.aliyuncs.com/app/default_portrait.png";
 	//默认的用户头像缩略图
@@ -47,6 +47,11 @@ public class GlobalConstant {
 	public static final String CLOOPEN_MAITIN_APP_ID = "aaf98f894c9d994b014cb714c8d81290";  //麦田地图app id
 	public static final String CLOOPEN_MAITIN_APP_TOKEN = "569f968bad8faa78e9f0270930bcf625"; //麦田地图app token
 	public static final String CLOOPEN_SMS_ID = "21396";   //短信模板id  发送验证码
+	
+	//类别
+	public static final String CAT_CHIHE = "01";  //吃喝
+	public static final String CAT_WANLE = "02";//玩乐
+	public static final String CAT_OTHER = "99";//其它
 	
 	//游客
 	public static final Integer VISITOR_LIMIT_COUNT = 1000;   //单个ip的游客数量 

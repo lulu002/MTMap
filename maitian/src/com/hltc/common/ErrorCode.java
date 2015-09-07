@@ -42,6 +42,8 @@ public class ErrorCode {
 	public static final String COMMENT_FAILED = "20004";
 	//麦粒删除失败
 	public static final String GRAIN_DEL_FAILED = "20005";
+	//私密麦粒不能被分享
+	public static final String PRIVATE_GRAIN_NOT_SHARE = "20006";
 	
 	//游客数量超出限制
 	public static final String VISITOR_COUNT_LIMIT_ERROR = "30001";
@@ -56,12 +58,17 @@ public class ErrorCode {
 	//Site不存在
 	public static final String SITE_NOT_EXIST = "50001";
 	
+	//Praise not exist
+	public static final String PRAISE_NOT_EXIST = "60001";
+	
 	//参数错误
 	public static final String PARAMS_ERROR = "e00001";
 	//数据库错误
 	public static final String DB_ERROR = "e00002";
 	//数据库记录重复，不唯一
 	public static final String ITEM_REPEAT = "e00003";
+	//无权限
+	public static final String NO_PERMISSION = "e00004";
 	
 	//获取OSS federation token失败
 	public static final String OSS_FED_TOKEN_FAILED = "e10001";
@@ -89,6 +96,7 @@ public class ErrorCode {
 		errorMessage.put(COMMENT_DEL_FAILED, "评论删除失败");
 		errorMessage.put(COMMENT_FAILED, "评论失败");
 		errorMessage.put(GRAIN_DEL_FAILED, "麦粒删除失败");
+		errorMessage.put(PRIVATE_GRAIN_NOT_SHARE, "私密麦粒不能被分享");
 		
 		errorMessage.put(VISITOR_COUNT_LIMIT_ERROR, "游客数量超出限制");
 		
@@ -96,10 +104,13 @@ public class ErrorCode {
 		errorMessage.put(NOT_FRIEND, "对方不是您的好友");
 		
 		errorMessage.put(SITE_NOT_EXIST, "Site不存在");
+		errorMessage.put(PRAISE_NOT_EXIST, "praise not exists");
 		
 		errorMessage.put(PARAMS_ERROR, "参数错误");
 		errorMessage.put(DB_ERROR, "数据库操作失败");
 		errorMessage.put(ITEM_REPEAT, "数据库记录重复，不唯一");
+		errorMessage.put(NO_PERMISSION, "无权限");
+		
 		errorMessage.put(OSS_FED_TOKEN_FAILED, "获取OSS federation token失败");
 	}
 }

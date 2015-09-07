@@ -33,7 +33,7 @@ public class GrainDaoImpl extends GenericHibernateDao<Grain> implements IGrainDa
 			sql.append(uid + ",");
 		}
 		sql.deleteCharAt(sql.length() -1);
-		sql.append(") and u.user_id = g.user_id and g.city_code = :cityCode");
+		sql.append(") and u.user_id = g.user_id and g.city_code = :cityCode and g.is_public = 1 and g.is_deleted = 0");
 		if(null != mtcateId){
 			sql.append(" and mcate_id = :mtcateId");
 		}
@@ -135,13 +135,20 @@ public class GrainDaoImpl extends GenericHibernateDao<Grain> implements IGrainDa
 	}
 
 	@Override
-	public Integer getCountByCate(Long userId, String cateExpression) {
+	public Integer getCountByCate(Long userId, String cateExpression, Boolean isPublic) {
 		Session session = null;
 		Integer count = null;
-		String sql = "SELECT count(*) as count from grain1 as g where g.user_id = ? and g.mcate_id like ?";
+		StringBuilder sql =new StringBuilder( "SELECT count(*) as count from grain1 as g where g.user_id = ? and g.mcate_id like ?");
+		if(null != isPublic){
+			sql.append(" and g.is_public = ?");
+		}
 		try{
 			session = getSession();
-			BigInteger result = (BigInteger)session.createSQLQuery(sql).setParameter(0, userId).setParameter(1, cateExpression).uniqueResult();
+			Query query = session.createSQLQuery(sql.toString()).setParameter(0, userId).setParameter(1, cateExpression+"%");
+			if(null != isPublic){
+				query.setParameter(2, isPublic);
+			}
+			BigInteger result = (BigInteger)query.uniqueResult();
 			if(null != result){
 				count = result.intValue();
 			}
@@ -152,11 +159,5 @@ public class GrainDaoImpl extends GenericHibernateDao<Grain> implements IGrainDa
 			session.close();
 		}
 		return count;
-	}
-	
-	public static void main(String[] args) {
-		GrainDaoImpl dao = new GrainDaoImpl();
-		List<Grain> list = dao.getUrecommendGrains((long)500001);
-		
 	}
 }

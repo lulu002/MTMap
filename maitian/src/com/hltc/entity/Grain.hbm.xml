@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 <!-- 
@@ -63,6 +63,11 @@
         <property name="cityCode" type="java.lang.String">
             <column name="city_code" length="5">
                 <comment>城市编码</comment>
+            </column>
+        </property>
+        <property name="isShared" type="java.lang.Boolean">
+            <column name="is_shared">
+                <comment>该麦粒是否被分享到网页版</comment>
             </column>
         </property>
     </class>

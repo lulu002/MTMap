@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 
-import com.google.gson.JsonArray;
 import com.hltc.common.ErrorCode;
 import com.hltc.common.GlobalConstant;
 import com.hltc.common.Result;
@@ -34,8 +33,6 @@ import com.hltc.dao.ITokenDao;
 import com.hltc.dao.IUserDao;
 import com.hltc.dao.IVerifyCodeDao;
 import com.hltc.dao.IVersionDao;
-import com.hltc.entity.Feedback;
-import com.hltc.entity.Friend;
 import com.hltc.entity.Token;
 import com.hltc.entity.User;
 import com.hltc.entity.VerifyCode;

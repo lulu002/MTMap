@@ -20,6 +20,7 @@ public class Grain implements java.io.Serializable {
 	private Boolean isDeleted;
 	private Short recommend;
 	private String cityCode;
+	private Boolean isShared;
 
 	// Constructors
 
@@ -36,7 +37,8 @@ public class Grain implements java.io.Serializable {
 	/** full constructor */
 	public Grain(Long gid, String mcateId, String siteId, Long userId,
 			Boolean isPublic, String text, Double lon, Double lat,
-			Long createTime, Boolean isDeleted, Short recommend, String cityCode) {
+			Long createTime, Boolean isDeleted, Short recommend,
+			String cityCode, Boolean isShared) {
 		this.gid = gid;
 		this.mcateId = mcateId;
 		this.siteId = siteId;
@@ -49,6 +51,7 @@ public class Grain implements java.io.Serializable {
 		this.isDeleted = isDeleted;
 		this.recommend = recommend;
 		this.cityCode = cityCode;
+		this.isShared = isShared;
 	}
 
 	// Property accessors
@@ -147,6 +150,14 @@ public class Grain implements java.io.Serializable {
 
 	public void setCityCode(String cityCode) {
 		this.cityCode = cityCode;
+	}
+
+	public Boolean getIsShared() {
+		return this.isShared;
+	}
+
+	public void setIsShared(Boolean isShared) {
+		this.isShared = isShared;
 	}
 
 }
